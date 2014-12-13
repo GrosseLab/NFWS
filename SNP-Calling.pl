@@ -6,7 +6,7 @@ use warnings;
 use strict;
 
 my %options=();
-getopts("hr:n:m:sf:a:b:dg:", \%options);
+getopts("hr:n:m:sf:b:dg:", \%options);
 
 eval {
 
@@ -129,7 +129,7 @@ eval {
 		execprint("java -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar -T GenotypeGVCFs -R $options{r} --variant $gvcf_file -o $vcf_file");
 
 	$step++; # 14: analyse SNPs with Analysis-Pipeline
-		execprint("perl ~/NGS-scripts/AnalyseSNPs.pl -i $vcf_file -7");
+		execprint("perl ~/NGS-scripts/DefaultPipelines/AnalyseSNPs.pl -i $vcf_file -7");
 		execprint("rm $vcf_file");
 		execprint("rm " . $vcf_file . ".idx");
 
