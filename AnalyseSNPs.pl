@@ -6,7 +6,7 @@ use warnings;
 use strict;
 
 my %options=();
-getopts("hi:g:78", \%options);
+getopts("hi:g:78s", \%options);
 
 eval {
 	my %vcf;
