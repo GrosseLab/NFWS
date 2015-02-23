@@ -1,0 +1,10 @@
+
+rule htseq_count:
+    """Assigns counts to annotated features using name sorted BAMs."""
+    input: bams = expand("results/mapping/{{reference}}/{unit}_name.bam", unit = config["units"].keys() ) ,
+           gtf = lambda wildcards: config["features"][wildcards.features]
+    output: "results/de/{reference}/{features}.counts"
+    threads: 30
+    params: feature = config["features"]["type"]
+    shell: "featureCounts -T {threads} -p -t exon -g {params.feature} -a {input.gtf} -o {output} {input.bams}"
+    

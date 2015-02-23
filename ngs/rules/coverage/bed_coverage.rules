@@ -1,0 +1,7 @@
+
+rule target_coverage:
+    """Compute per base coverage of sequenced regions."""
+    input: bam = "results/mapping/{prefix}.bam", 
+           manifest = "/data/references/{platform}/kits/{manifest}.bed" #trusight_cancer_manifest_a_pret_ext.bed
+    output: "results/coverage/{prefix}/{platform}_{manifest}.cov"
+    shell: "bedtools coverage -split -d -abam {input.bam} -b {input.manifest} > {output}"
