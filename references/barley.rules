@@ -1,0 +1,29 @@
+#############################################################################
+#          Script to generate barley reference data.                        #
+#                                                                           #
+# Date: 23.02.2015                                                          #
+#                                                                           #
+# Example usage: snakemake --snakefile barley.rules                         #
+#############################################################################
+
+rule barley_genome:
+    output: "barley/morex/genome/morex.fa"
+    shell: "wget -q -O - ftp://ftpmips.helmholtz-muenchen.de/plants/barley/public_data/sequences/assembly3_WGSMorex_renamed_blastable_carma.zip | gunzip > {output}"
+
+rule barley_hc_genes:
+    """Download high confidence gene set."""
+    output: "barley/morex/genes/highconf.gtf"
+    shell: "wget -q -O - ftp://ftpmips.helmholtz-muenchen.de/plants/barley/public_data/genes/barley_HighConf_genes_MIPS_21Aug12_Transcript_and_CDS_structure.gtf | sed 's/^contig/morex_contig/' > {output}"
+
+rule barley_lc_genes:
+    """Download low confidence gene set."""
+    output: "barley/morex/genes/lowconf.gtf"
+    shell: "wget -q -O - ftp://ftpmips.helmholtz-muenchen.de/plants/barley/public_data/genes/barley_LowConf_genes_MIPS_21Aug12_Transcript_and_CDS_structure.gtf | sed 's/^contig/morex_contig/' > {output}"
+
+rule barley_genes:
+    """Merge high and low confidence genes."""
+    input: hc = "barley/morex/genes/highconf.gtf",
+           lc = "barley/morex/genes/lowconf.gtf"
+    output: "barley/morex/genes/all.gtf"
+    shell: "cat {input.hc} {input.lc} > {output}"
+           
