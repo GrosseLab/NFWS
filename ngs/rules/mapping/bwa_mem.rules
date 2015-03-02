@@ -5,16 +5,23 @@ UNIT_TO_SAMPLE = {
     unit: sample for sample, units in config["samples"].items()
     for unit in units }
 
-BWA_INDEX_SUFFIXES = [ "amb", "ann", "bwt", "pac", "sa" ]
+BWA_INDEX_SUFFIXES = [ ".amb", ".ann", ".bwt", ".pac", ".sa" ]
 
 rule bwa_index:
+    """Creates an index of a fasta file."""
     input: "{prefix}.fa"
-    output: expand("{{prefix}}.fa.{suf}", suf = BWA_INDEX_SUFFIXES)
+    output: expand("{{prefix}}.fa{suf}", suf = BWA_INDEX_SUFFIXES)
     shell: "bwa index {input}"
 
+def _get_ref_files(wildcards):
+    """Fetches the reference file from the config and attaches all auxillary files."""
+    ref = config["references"][wildcards.reference]
+    map( lambda suf: ref + suf, [""] +  BWA_INDEX_SUFFIXES)
+
 rule bwa_mem_map:
+    """Maps reads specified in the config file (of a given kind (e.g. raw or trimmed)) on a reference sequence."""
     input:
-        ref = lambda wildcards: config["references"][wildcards.reference],
+        ref = _get_ref_files
         fastq = lambda wildcards: map( lambda f: "data/reads/" + wildcards.kind + "/" + f, config["units"][wildcards.unit])
     output:
         "results/mapping/{reference}/{kind}/{unit}.bam"
