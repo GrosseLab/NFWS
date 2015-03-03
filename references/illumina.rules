@@ -14,28 +14,21 @@ ILLUMINA_URL = "http://support.illumina.com/content/dam/illumina-support/documen
 
 rule one_manifest_download:
     """Download trusight one manifest."""
-    output: "illumina/kits/trusight-one-bed-may-2014.bed"
+    output: config["ref_dir"] + "/illumina/kits/trusight-one-bed-may-2014.bed"
     shell: "wget -q -O - {ILLUMINA_URL}/downloads/productfiles/trusight/trusight-one-bed-may-2014.zip | gunzip > {output}"
 
 # trusight cancer kit
 
-rule cancer_manifest_download:
-    """Download trusight cancer kit manifest"""
-    output: "illumina/kits/trusight_cancer_manifest_a.bed"
-    shell: "wget -q -O {output} {ILLUMINA_URL}/documentation/chemistry_documentation/trusight/trusight_cancer_manifest_a.bed"
+rule trusight_cancer_manifest:
+    """Download trusight cancer kit manifest, clean up and extend target regions."""
+    output: config["ref_dir"] + "/illumina/kits/trusightcancer.bed"
+    shell: """
+    wget -q -O - {ILLUMINA_URL}/documentation/chemistry_documentation/trusight/trusight_cancer_manifest_a.bed | 
+    sed 's/chr//' | 
+    sed 's/\.chr[1-9,X,Y]\+//' |
+    sed 's/\./\t/' | 
+    sed 's/\./-/' | 
+    awk '{{print $1\"\t\"$2-20\"\t\"$3+20\"\t\"$4\"\t\"$5}}' > {output}
+    """
 
-rule cancer_manifest_pretify:
-    """Pretifies the manifest file so it is easily readable by R (ggplot2)"""
-    input: "illumina/kits/trusight_cancer_manifest_a.bed"
-    output: "illumina/kits/trusight_cancer_manifest_a_pret.bed"
-    shell: "cat {input} | "
-           "sed 's/chr//' | " # trim first 'chr' in illumina manifest
-           "sed 's/\.chr[1-9,X,Y]\+//' | " # remove 'chr{.+}' from location
-           "sed 's/\./\t/' | " # replace first '.' in location to a TAB
-           "sed 's/\./-/' > {output}" # replace last '.' in location to a '-' to pretify the region
 
-rule cancer_manifest_extend_exons:
-    """Extends the start/end of each feature by -20/+20 bp"""
-    input: "illumina/kits/trusight_cancer_manifest_a_pret.bed"
-    output: "illumina/kits/trusight_cancer_manifest_a_pret_ext.bed"
-    shell: "awk '{{print $1\"\t\"$2-20\"\t\"$3+20\"\t\"$4\"\t\"$5}}' {input} > {output}" # add -20/+20 to column 2/3
