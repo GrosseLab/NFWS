@@ -2,6 +2,6 @@
 rule target_coverage:
     """Compute per base coverage of sequenced regions."""
     input: bam = "results/mapping/{ref}/{kind}/{unit}.bam", 
-           manifest = config["ref_dir"] + "/{platform}/kits/{manifest}.bed" 
+           manifest = config["ref_dir"] + "/{platform}/{ref}/kits/{manifest}.bed" 
     output: "results/coverage/{ref}/{kind}/{unit}_{platform}_{manifest}.cov"
     shell: "bedtools coverage -split -d -abam {input.bam} -b {input.manifest} > {output}"
