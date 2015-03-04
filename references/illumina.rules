@@ -13,18 +13,17 @@ ILLUMINA_URL = "http://support.illumina.com/content/dam/illumina-support/documen
 # trusight one kit
 
 rule one_manifest_download:
-    """Download trusight one manifest."""
+    """Downloads trusight one manifest."""
     output: config["ref_dir"] + "/illumina/kits/trusight-one-bed-may-2014.bed"
     shell: "wget -q -O - {ILLUMINA_URL}/downloads/productfiles/trusight/trusight-one-bed-may-2014.zip | gunzip > {output}"
 
 # trusight cancer kit
 
 rule trusight_cancer_manifest:
-    """Download trusight cancer kit manifest, clean up and extend target regions."""
+    """Downloads trusight cancer kit manifest, clean up and extend target regions."""
     output: config["ref_dir"] + "/illumina/kits/trusightcancer.bed"
     shell: """
     wget -q -O - {ILLUMINA_URL}/documentation/chemistry_documentation/trusight/trusight_cancer_manifest_a.bed | 
-    sed 's/chr//' | 
     sed 's/\.chr[1-9,X,Y]\+//' |
     sed 's/\./\t/' | 
     sed 's/\./-/' | 
