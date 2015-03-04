@@ -1,4 +1,9 @@
-# Expects a config filled template config
+#############################################################################
+#          Rules to map fastq reads to a fasta reference using bwa.         #
+#                                                                           #
+# Date: 02.01.2015                                                          #
+#                                                                           #
+#############################################################################
 
 # dictionary to get the sample assigned to a unit
 UNIT_TO_SAMPLE = {

@@ -1,7 +1,20 @@
+#############################################################################
+#          Rules to generate coverage files given bed features.             #
+#                                                                           #
+# Date: 02.01.2015                                                          #
+#                                                                           #
+#############################################################################
 
 rule target_coverage:
     """Compute per base coverage of sequenced regions."""
     input: bam = "results/mapping/{ref}/{kind}/{unit}.bam", 
            manifest = config["ref_dir"] + "/{platform}/{ref}/kits/{manifest}.bed" 
     output: "results/coverage/{ref}/{kind}/{unit}_{platform}_{manifest}.cov"
-    shell: "bedtools coverage -split -d -abam {input.bam} -b {input.manifest} > {output}"
+    shell: "/usr/local/bin/bedtools/bin/bedtools coverage -split -d -abam {input.bam} -b {input.manifest} > {output}"
+
+rule target_coverage_hist:
+    """Compute per base coverage of sequenced regions."""
+    input: bam = "results/mapping/{ref}/{kind}/{unit}.bam",
+           manifest = config["ref_dir"] + "/{platform}/{ref}/kits/{manifest}.bed" 
+    output: "results/coverage/{ref}/{kind}/{unit}_{platform}_{manifest}.hist"
+    shell: "/usr/local/bin/bedtools/bin/bedtools coverage -hist -abam {input.bam} -b {input.manifest} | grep ^all > {output}"

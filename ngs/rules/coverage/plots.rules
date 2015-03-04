@@ -1,17 +1,22 @@
+#############################################################################
+#          Rules to generate coverage plots.                                #
+#                                                                           #
+# Date: 02.01.2015                                                          #
+#                                                                           #
+#############################################################################
 
 from snakemake.utils import R
 
-rule target_coverage_plot:
+rule plot_regions:
     """Produces coverage plots for each gene in the manifest file."""
-    input: expand("results/coverage/{sample}.cov", sample = map( lambda x: x[:-3], SAMPLES[0::2]) ) 
-    output: "plots/coverage/BRCA1.pdf"
+    input: expand("results/coverage/{{ref}}/{{kind}}/{unit}_{{platform}}_{{manifest}}.cov", unit = config["units"].keys() )
+    output: "plots/coverage/{ref}/{kind}/BRCA1_{platform}_{manifest}.pdf"
     run: 
       R("""
-      require(ggplot2)
-
-      setwd('results/coverage/')
-      files <- list.files( pattern = '*.cov$') # filenames
-      labels <- sub( '.cov$', "", files) # extract sample names
+      library(ggplot2)
+      setwd('results/coverage/{wildcards.ref}/{wildcards.kind}')
+      files <- c( {input} ) 
+      labels <- sub( '_{wildcards.platform}_{wildcards.manifest}.cov$', "", files) # extract sample names
       cov <- list()
       for (i in seq_along(files)) {{ 
       cov[[i]] <- read.table(files[i])
@@ -26,7 +31,7 @@ rule target_coverage_plot:
       ## TODO check if ATM_SNP works
       features.genes <- features.all[ !grepl('rs|AMG|MITF|ATM_SNP|HOXB', features.all) ] # filter out SNPs
       
-      setwd('../../plots/coverage/')
+      setwd('plots/coverage/{wildcards.ref}/{wildcards.kind}')
       
       for (f in features.genes ) {{
       filename <- paste(f, ".pdf", sep = '')
@@ -39,13 +44,9 @@ rule target_coverage_plot:
       }}""")
     
 
-rule target_hist_coverage:
-    """Compute per base coverage of sequenced regions."""
-    input: bam = "results/mapping/{sample}.bam", manifest = "/data/illumina/kits/trusight_cancer_manifest_a_pret_ext.bed"
-    output: "results/coverage/{sample}_hist.cov"
-    shell: "bedtools coverage -hist -abam {input.bam} -b {input.manifest} > {output}" # TODO grep all
 
-rule target_hist_coverage_plot:
+
+rule plot_hist:
     """Produces a summary plot of target coverage."""
     input: "results/coverage/{sample}_hist.cov"
     output: "plots/coverage/all.pdf"
