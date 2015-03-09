@@ -10,30 +10,34 @@ from snakemake.utils import R
 rule plot_regions:
     """Produces coverage plots for each gene in the manifest file."""
     input: expand("results/coverage/{{ref}}/{{kind}}/{unit}_{{platform}}_{{manifest}}.cov", unit = config["units"].keys() )
-    output: "plots/coverage/{ref}/{kind}/BRCA1_{platform}_{manifest}.pdf"
+    output: "plots/coverage/{ref}/{kind}/{platform}_{manifest}/BRCA1.pdf"
     run: 
+      files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
+      ref = wildcards.ref,
+      kind = wildcards.kind,
+      platform = wildcards.platform,
+      manifest = wildcards.manifest,
       R("""
       library(ggplot2)
-      setwd('results/coverage/{wildcards.ref}/{wildcards.kind}')
-      files <- c( {input} ) 
-      labels <- sub( '_{wildcards.platform}_{wildcards.manifest}.cov$', "", files) # extract sample names
+
+      files <- {files}
+      labels <- sub( '_.*', "", files) # extract sample names
       cov <- list()
-      for (i in seq_along(files)) {{ 
+      for (i in seq_along(files)) {{
       cov[[i]] <- read.table(files[i])
       cov[[i]] <- cbind( labels[i], cov[[i]])
       }}
-      
+
       df <- do.call('rbind', cov)
-      colnames(df) <- c('Sample', 'Chromosome', 'Start', 'End', 'Feature', 'Region', 'Position', 'Coverage')
+      regions <- sub(".*?-", "", df[,5]) # delete gene name (? activates non-greedy evaluation of regex)
+      features <- sub("-.*", "", df[,5]) # delete coordinates
       
-      features.all <- levels( df[,'Feature'] )
-      
-      ## TODO check if ATM_SNP works
-      features.genes <- features.all[ !grepl('rs|AMG|MITF|ATM_SNP|HOXB', features.all) ] # filter out SNPs
-      
-      setwd('plots/coverage/{wildcards.ref}/{wildcards.kind}')
-      
-      for (f in features.genes ) {{
+      df <- data.frame( Sample = df[,1], Chromosome = df[,2], Start = df[,3], End = df[,4], Feature = features, 
+      Region = regions, Position = df[,6], Coverage = df[,7])
+
+      setwd('plots/coverage/{ref}/{kind}/{platform}_{manifest}/')
+
+      for (f in levels( df[,'Feature'] ) ) {{
       filename <- paste(f, ".pdf", sep = '')
       cat(paste("Plotting", filename, "\n"))
       p <- ggplot( data = df[ (df[,'Feature'] == f),], aes( x = Position, y = Coverage, colour = Sample) )
@@ -41,38 +45,43 @@ rule plot_regions:
       p <- p + ggtitle( paste('Coverage of target regions in', f) )
       p <- p + theme( plot.title = element_text( face = 'bold', vjust = 2 ) )
       ggsave( file = filename, plot = p, width = 10, height = 10, title = paste("Coverage of target regions in", f) )      
-      }}""")
-    
-
+      }}
+      """)
 
 
 rule plot_hist:
     """Produces a summary plot of target coverage."""
-    input: "results/coverage/{sample}_hist.cov"
-    output: "plots/coverage/all.pdf"
+    input: expand("results/coverage/{{ref}}/{{kind}}/{unit}_{{platform}}_{{manifest}}.hist", unit = config["units"].keys() )
+    output: "plots/coverage/{ref}/{kind}/{platform}_{manifest}/Total.pdf"
     run:
+      files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
+      ref = wildcards.ref,
+      kind = wildcards.kind,
+      platform = wildcards.platform,
+      manifest = wildcards.manifest,
       R("""
-      require(ggplot2)
+      library(ggplot2)
 
-      setwd('results/coverage/')
-      files <- list.files( pattern = '*_cov_hist_all.bed') # filenames
+      files <- {files}
       labels <- sub( '_.*', "", files) # extract sample names
-
       cov <- list()
 
-      for (i in seq_along(files)) {
+      for (i in seq_along(files)) {{
       cov[[i]] <- read.table(files[i])
       cov[[i]] <- cov[[i]][,c(-1, -4)] # drop first column
       cov[[i]] <- cbind( cov[[i]], 1 - cumsum( cov[[i]][,3] ) ) # add cummulative frequency of depth
       cov[[i]] <- cbind( labels[i], cov[[i]]) # add label column
-      }
-
-      setwd('plots/coverage/')
-
+      }}
+      
       df <- do.call('rbind', cov)
       colnames(df) <- c('Sample', 'Depth', 'Count', 'Frequency', 'CumFrequency')
-      
-      p <- ggplot( data = df, aes( x = Depth, y = CumFrequency, colour = Sample ) ) + geom_line() + xlim(0, 500) +
-      ylim(0.7, 1.0) + geom_vline( xintercept = c(20,50,100), linetype = "longdash" ) + ggtitle("Coverage distribution") + xlab("Depth of coverage") + ylab( sprintf("Fraction of target bases with a coverage >= depth" ) )
-      ggsave( file = "TargetCoverage.pdf", plot = p, width = 10, height = 10, title = "Coverage distribution of target regions" )
+
+      setwd('plots/coverage/{ref}/{kind}/{platform}_{manifest}')
+
+      p <- ggplot( data = df, aes( x = Depth, y = CumFrequency, colour = Sample ) ) 
+      p <- p + geom_line() + xlim(0, 500) + ylim(0.7, 1.0)
+      p <- p + geom_vline( xintercept = c(20,50,100), linetype = "longdash" )
+      p <- p + ggtitle("Coverage distribution") + xlab("Depth of coverage") 
+      p <- p + ylab( sprintf("Fraction of target bases with a coverage >= depth" ) )
+      ggsave( file = "Total.pdf", plot = p, width = 10, height = 10, title = "Coverage distribution of target regions" )
       """)
