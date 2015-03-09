@@ -24,8 +24,13 @@ rule genome_hg37_download:
 
 ## dbSNP hg38
 rule dbsnp_hg38_download:
-    output: config["ref_dir"] + "/human/hg38/snp/dbsnp38.vcf"
-    shell: "wget -q -O - ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/All_20150114.vcf.gz | gunzip -cd > {output}"
+    output: config["ref_dir"] + "/human/hg38/snp/dbsnp142.vcf"
+    shell: "wget -q -O - ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/All_20150218.vcf.gz | gunzip -cd > {output}"
+
+##dbSNP hg37
+rule dbsnp_hg37_download:
+    output: config["ref_dir"] + "/human/hg37/snp/dbsnp142.vcf"
+    shell: "wget -q -O - ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b142_GRCh37p13/VCF/All_20150217.vcf.gz | gunzip -cd > {output}"
 
 ## HapMap
 # not included by now because the latest release is based on hg36

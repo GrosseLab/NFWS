@@ -18,26 +18,28 @@ rule mark_duplicates:
 
 rule realign_info:
    """Determines critical regions for realignment."""
-    input: bam = "results/mapping/{reference}/{prefix}_dedup.bam",
-           bai = "results/mapping/{reference}/{prefix}_dedup.bam.bai",
-           ref = lambda wildcards: config["references"][wildcards.reference]
-    output: "results/mapping/{reference}/{prefix}_realign_intervals.list"
+    input: bam = "results/mapping/{reference}/{kind}/{prefix}_dedup.bam",
+           bai = "results/mapping/{reference}/{kind}/{prefix}_dedup.bam.bai",
+           dbsnp = config["ref_dir"] + config["known_variants"]["dbsnp"],
+           ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
+           idx = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference] + ".fai" 
+    output: "results/mapping/{reference}/{kind}/{prefix}_realign_intervals.list"
     threads: 10
     shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
            "-T RealignerTargetCreator "
            "-nt {threads} "
-           "-known {config[known_variants][db_snp]}"
+           "-known {input.dbsnp} "
            "-R {input.ref} "
            "-I {input.bam} "
            "-o {output}"
 
 rule realign_reads:
     """Realigns reads on critical regions."""
-    input: bam = "results/mapping/{reference}/{prefix}_dedup.bam",
-           bai = "results/mapping/{reference}/{prefix}_dedup.bam.bai",
-           ref = lambda wildcards: config["references"][wildcards.reference],
-           interval = "results/mapping/{reference}/{prefix}_realign_intervals.list"
-    output: "results/mapping/{reference}/{prefix}_realign.bam"
+    input: bam = "results/mapping/{reference}/{kind}/{prefix}_dedup.bam",
+           bai = "results/mapping/{reference}/{kind}/{prefix}_dedup.bam.bai",
+           ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
+           interval = "results/mapping/{reference}/{kind}/{prefix}_realign_intervals.list"
+    output: "results/mapping/{reference}/{kind}/{prefix}_realign.bam"
     shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
            "-T IndelRealigner "
            "--disable_bam_indexing "
@@ -48,31 +50,32 @@ rule realign_reads:
 
 # Quality score recalibration
 
-# rule recalibrate_info:
-#     input: ref = lambda wildcards: config["references"][wildcards.reference],
-#            bam = "results/mapping/{reference}/{prefix}.bam",
-#            bai = "results/mapping/{reference}/{prefix}.bam.bai"
-#     output: "results/mapping/{reference}/{prefix}_recalibrate.grp")
-#     log:
-#         "results/mapping/log/{reference}/{prefix}_recalibrate_info.log"
-#     threads: 8
-#     shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
-#            "-T BaseRecalibrator -R {input.ref} "
-#            "-nct {threads} "
-#            "-I {input.bam} "
-#            "-knownSites {config[known_variants][dbsnp]} "
-#            "-o {output} >& {log}"
+rule recalibrate_info:
+    input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
+           dbsnp = config["ref_dir"] + config["known_variants"]["dbsnp"],
+           bam = "results/mapping/{reference}/{kind}/{prefix}.bam",
+           bai = "results/mapping/{reference}/{kind}/{prefix}.bam.bai"
+    output: "results/mapping/{reference}/{kind}/{prefix}_recalibrate.grp"
+    log:
+        "results/mapping/log/{reference}/{kind}/{prefix}_recalibrate_info.log"
+    threads: 8
+    shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
+           "-T BaseRecalibrator -R {input.ref} "
+           "-nct {threads} "
+           "-I {input.bam} "
+           "-knownSites {input.dbsnp} "
+           "-o {output} >& {log}"
     
-# rule recalibrate_bam:
-#     input: ref = lambda wildcards: config["references"][wildcards.reference],
-#            bam = "results/mapping/{reference}/{prefix}.bam",
-#            grp = "results/mapping/{reference}/{prefix}_recalibrate.grp"
-#     output: "results/mapping/{reference}/{prefix}_recalibrated.bam"
-#     log: "results/mapping/log/{reference}/{prefix}_recalibrate.log"
-#     threads: 8
-#     shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
-#            "-T PrintReads -R {input.ref} "
-#            "-nct {threads} "
-#            "--disable_bam_indexing "
-#            "-I {input.bam} -BQSR {input.grp} "
-#            "-o {output} >& {log}"
+rule recalibrate_bam:
+    input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
+           bam = "results/mapping/{reference}/{kind}/{prefix}.bam",
+           grp = "results/mapping/{reference}/{kind}/{prefix}_recalibrate.grp"
+    output: "results/mapping/{reference}/{kind}/{prefix}_recalibrated.bam"
+    log: "results/mapping/log/{reference}/{kind}/{prefix}_recalibrate.log"
+    threads: 8
+    shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
+           "-T PrintReads -R {input.ref} "
+           "-nct {threads} "
+           "--disable_bam_indexing "
+           "-I {input.bam} -BQSR {input.grp} "
+           "-o {output} >& {log}"

@@ -20,7 +20,13 @@ rule bam_sort_name:
     shell: "samtools sort -n -@ {threads} -m 30G {input} {wildcards.prefix}_name"
 
 rule bam_index:
-    """Create BAM index."""
+    """Creates BAM index."""
     input: "{prefix}.bam"
     output: "{prefix}.bam.bai"
     shell: "samtools index {input}"
+
+rule fasta_index:
+    """Creates Fasta index."""
+    input: "{prefix}.fa"
+    output: "{prefix}.fa.fai"
+    shell: "samtools faidx {input}"
