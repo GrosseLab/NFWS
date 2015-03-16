@@ -1,0 +1,22 @@
+#############################################################################
+#          Rules of the picard tool suite.                                  #
+#                                                                           #
+# Date: 17.02.2015                                                          #
+#                                                                           #
+#############################################################################
+
+# Marking PCR duplicates
+
+rule mark_duplicates:
+    """Marks duplicate fragments."""
+    input: "{prefix}/{unit}_coord.bam"
+    output: bam = "{prefix}/{unit}_dedup.bam",
+            metrics = "{prefix}/dedup_metrics/{unit}_dedup.report"
+    shell: "java -Xmx40g -jar /usr/local/bin/picard-tools-1.119/MarkDuplicates.jar INPUT={input} OUTPUT={output.bam} METRICS_FILE={output.metrics}"
+
+
+rule create_seq_dict:
+    """Creates a sequence dictionary using a fasta file."""
+    input: "{prefix}.fa"
+    output: "{prefix}.dict"
+    shell:  "java -jar /usr/local/bin/picard-tools-1.119/CreateSequenceDictionary.jar R= {input} O= {output}"

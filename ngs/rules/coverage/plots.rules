@@ -17,11 +17,12 @@ rule plot_regions:
       kind = wildcards.kind,
       platform = wildcards.platform,
       manifest = wildcards.manifest,
+      run = config["run"],
       R("""
       library(ggplot2)
 
       files <- {files}
-      labels <- sub( '_.*', "", files) # extract sample names
+      labels <- sub( '_.*', "", basename(files)) # extract sample names
       cov <- list()
       for (i in seq_along(files)) {{
       cov[[i]] <- read.table(files[i])
@@ -34,15 +35,20 @@ rule plot_regions:
       
       df <- data.frame( Sample = df[,1], Chromosome = df[,2], Start = df[,3], End = df[,4], Feature = features, 
       Region = regions, Position = df[,6], Coverage = df[,7])
+      df[,'Position'] <- df[, 'Position'] - 20
 
       setwd('plots/coverage/{ref}/{kind}/{platform}_{manifest}/')
 
       for (f in levels( df[,'Feature'] ) ) {{
       filename <- paste(f, ".pdf", sep = '')
-      cat(paste("Plotting", filename, "\n"))
-      p <- ggplot( data = df[ (df[,'Feature'] == f),], aes( x = Position, y = Coverage, colour = Sample) )
-      p <- p + geom_line() + geom_hline( aes(yintercept = 100)) + facet_wrap( ~ Region, scales = 'free_x' )
-      p <- p + ggtitle( paste('Coverage of target regions in', f) )
+      cat(paste("Plotting", filename))
+      features <- df[(df[,'Feature'] == f),]
+      p <- ggplot( data = features, aes( x = Position, y = Coverage, colour = Sample) )
+      p <- p + geom_line() + geom_hline( aes(yintercept = 100)) 
+      p <- p + geom_vline( xintercept = 0, colour="grey", linetype = "longdash" )
+      p <- p + geom_vline( aes( xintercept = End - Start - 40 ), colour="grey", linetype = "longdash" )
+      p <- p + facet_wrap( ~ Region, scales = 'free_x' )
+      p <- p + ggtitle( paste('Coverage of target regions in', f, 'on', features[1,'Chromosome'], 'in {ref}, run: {run}') )
       p <- p + theme( plot.title = element_text( face = 'bold', vjust = 2 ) )
       ggsave( file = filename, plot = p, width = 10, height = 10, title = paste("Coverage of target regions in", f) )      
       }}
@@ -59,6 +65,7 @@ rule plot_hist:
       kind = wildcards.kind,
       platform = wildcards.platform,
       manifest = wildcards.manifest,
+      run = config["run"],
       R("""
       library(ggplot2)
 
@@ -81,7 +88,7 @@ rule plot_hist:
       p <- ggplot( data = df, aes( x = Depth, y = CumFrequency, colour = Sample ) ) 
       p <- p + geom_line() + xlim(0, 500) + ylim(0.7, 1.0)
       p <- p + geom_vline( xintercept = c(20,50,100), linetype = "longdash" )
-      p <- p + ggtitle("Coverage distribution") + xlab("Depth of coverage") 
+      p <- p + ggtitle("Coverage distribution in run {run} using {ref}") + xlab("Depth of coverage") 
       p <- p + ylab( sprintf("Fraction of target bases with a coverage >= depth" ) )
       ggsave( file = "Total.pdf", plot = p, width = 10, height = 10, title = "Coverage distribution of target regions" )
       """)
