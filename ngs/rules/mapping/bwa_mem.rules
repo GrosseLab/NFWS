@@ -27,7 +27,8 @@ rule bwa_mem_map:
     """Maps reads specified in the config file (of a given kind (e.g. raw or trimmed)) on a reference sequence."""
     input:
         ref = _get_ref_files,
-        fastq = lambda wildcards: map( lambda f: "data/reads/" + wildcards.kind + "/" + f, config["units"][wildcards.unit])
+        left = "data/reads/{kind}/{unit}_P1.fastq.gz",
+        right = "data/reads/{kind}/{unit}_P2.fastq.gz",
     output:
         "results/mapping/{reference}/{kind}/{unit}.bam"
     params:
@@ -38,5 +39,5 @@ rule bwa_mem_map:
     shell: "bwa mem -M " # picard compatibility
            "-R '@RG\\tID:{wildcards.unit}\\t"
            "SM:{params.sample}\\tPL:{config[platform]}' "
-           "-t {threads} {input.ref[0]} {input.fastq} 2> {log} "
+           "-t {threads} {input.ref[0]} {input.left} {input.right} 2> {log} "
            "| samtools view -Sbh - > {output}"

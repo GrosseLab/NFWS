@@ -1,0 +1,21 @@
+#############################################################################
+#          Rules to trim fastq files                                        #
+#                                                                           #
+# Date: 17.02.2015                                                          #
+#                                                                           #
+#############################################################################
+
+rule trimmomatic_pe:
+    input: fastqs = lambda wildcards: map( lambda f: "data/reads/raw/" + f, config["units"][wildcards.unit])
+    output: "data/reads/filtered/{unit}_P1.fastq.gz",
+            "data/reads/filtered/{unit}_U1.fastq.gz",
+            "data/reads/filtered/{unit}_P2.fastq.gz",
+            "data/reads/filtered/{unit}_U2.fastq.gz"
+    shell: "java -jar /usr/local/bin/Trimmomatic-0.33/trimmomatic-0.33.jar PE -phred33 "
+           "{input.fastqs} "
+           "{output[0]} "
+           "{output[1]} "
+           "{output[2]} "
+           "{output[3]} "
+           "ILLUMINACLIP:/usr/local/bin/Trimmomatic-0.33/adapters/TruSeq3-PE.fa:2:30:10 "
+           "LEADING:10 TRAILING:10 SLIDINGWINDOW:4:15 MINLEN:36"
