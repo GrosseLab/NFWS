@@ -17,7 +17,7 @@ rule bam_sort_name:
     input: "{prefix}.bam"
     output: "{prefix}_name.bam"
     threads: 10
-    shell: "samtools sort -n -@ {threads} -m 10G {input} {wildcards.prefix}_name"
+    shell: "samtools sort -n -@ {threads} -m 4G {input} {wildcards.prefix}_name"
 
 rule bam_index:
     """Creates BAM index."""
