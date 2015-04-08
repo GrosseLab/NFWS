@@ -38,7 +38,13 @@ rule adjust_manifest:
     """Extends the targeted regions in a manifest file."""
     input: config["ref_dir"] + "/illumina/hg37/kits/{manifest}.bed"
     output: config["ref_dir"] + "/illumina/hg37/kits/{manifest}_{left}_{right}.bed"
-    shell: "awk '{{print $1\"\t\"$2-{wildcards.left}\"\t\"$3+{wildcards.right}\"\t\"$4}}' {input} > {output}"
+    shell: """
+           awk '{{
+           split( $4, splitFeature, "-" )
+           left = $2 - {wildcards.left}
+           right = $3 + {wildcards.right}
+           print $1 "\t" left "\t" right "\t" splitFeature[1] "-" left "-" right}}' {input} > {output}
+           """
 
 rule lift_manifest_from_hg37_to_hg38:
     """Lifts manifests for hg37 to hg38."""
@@ -46,6 +52,11 @@ rule lift_manifest_from_hg37_to_hg38:
            chain = config["ref_dir"] + "/human/hg37/chains/hg19ToHg38.over.chain"
     output: bed = config["ref_dir"] + "/illumina/hg38/kits/{manifest}.bed",
             unmapped = config["ref_dir"] + "/illumina/hg38/kits/{manifest}.bed"
-    shell: "/usr/local/bin/liftOver/liftOver {input.bed} {input.chain} {output.bed} {output.unmapped}"
+    shell: """
+    /usr/local/bin/liftOver/liftOver {input.bed} {input.chain} stdout {output.unmapped} |
+    awk '{{
+    split( $4, splitFeature, "-" )
+    print $1 "\t" $2 "\t" $3 "\t" splitFeature[1] "-" $2 "-" $3}}' > {output.bed}
+    """
     
 

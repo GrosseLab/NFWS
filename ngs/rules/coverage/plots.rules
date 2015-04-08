@@ -9,14 +9,16 @@ from snakemake.utils import R
 
 rule plot_regions:
     """Produces coverage plots for each gene in the manifest file."""
-    input: expand("results/coverage/{{ref}}/{{kind}}/{unit}_{{platform}}_{{manifest}}.cov", unit = config["units"].keys() )
-    output: "plots/coverage/{ref}/{kind}/{platform}_{manifest}/BRCA1.pdf"
+    input: expand("results/coverage/{{ref}}/{{kind}}/{unit}_{{platform}}_{{manifest}}_{{left}}_{{right}}.cov", unit = config["units"].keys() )
+    output: "plots/coverage/{ref}/{kind}/{platform}_{manifest}_{left}_{right}/BRCA1.pdf"
     run: 
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
       ref = wildcards.ref,
       kind = wildcards.kind,
       platform = wildcards.platform,
       manifest = wildcards.manifest,
+      left = wildcards.left,
+      right = wildcards.right,
       run = config["run"],
       R("""
       library(ggplot2)
@@ -35,9 +37,9 @@ rule plot_regions:
       
       df <- data.frame( Sample = df[,1], Chromosome = df[,2], Start = df[,3], End = df[,4], Feature = features, 
       Region = regions, Position = df[,6], Coverage = df[,7])
-      df[,'Position'] <- df[, 'Position'] - 20
+      df[,'Position'] <- df[, 'Position'] - {left}
 
-      setwd('plots/coverage/{ref}/{kind}/{platform}_{manifest}/')
+      setwd('plots/coverage/{ref}/{kind}/{platform}_{manifest}_{left}_{right}/')
 
       for (f in levels( df[,'Feature'] ) ) {{
       filename <- paste(f, ".pdf", sep = '')
@@ -46,7 +48,7 @@ rule plot_regions:
       p <- ggplot( data = features, aes( x = Position, y = Coverage, colour = Sample) )
       p <- p + geom_line() + geom_hline( aes(yintercept = 100)) 
       p <- p + geom_vline( xintercept = 0, colour="grey", linetype = "longdash" )
-      p <- p + geom_vline( aes( xintercept = End - Start - 40 ), colour="grey", linetype = "longdash" )
+      p <- p + geom_vline( aes( xintercept = End - Start - {left} - {right} ), colour="grey", linetype = "longdash" )
       p <- p + facet_wrap( ~ Region, scales = 'free_x' )
       p <- p + ggtitle( paste('Coverage of target regions in', f, 'on', features[1,'Chromosome'], 'in {ref}, run: {run}') )
       p <- p + theme( plot.title = element_text( face = 'bold', vjust = 2 ) )
@@ -57,14 +59,16 @@ rule plot_regions:
 
 rule plot_hist:
     """Produces a summary plot of target coverage."""
-    input: expand("results/coverage/{{ref}}/{{kind}}/{unit}_{{platform}}_{{manifest}}.hist", unit = config["units"].keys() )
-    output: "plots/coverage/{ref}/{kind}/{platform}_{manifest}/Total.pdf"
+    input: expand("results/coverage/{{ref}}/{{kind}}/{unit}_{{platform}}_{{manifest}}_{{left}}_{{right}}.hist", unit = config["units"].keys() )
+    output: "plots/coverage/{ref}/{kind}/{platform}_{manifest}_{left}_{right}/Total.pdf"
     run:
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
       ref = wildcards.ref,
       kind = wildcards.kind,
       platform = wildcards.platform,
       manifest = wildcards.manifest,
+      left = wildcards.left,
+      right = wildcards.right,
       run = config["run"],
       R("""
       library(ggplot2)
@@ -83,7 +87,7 @@ rule plot_hist:
       df <- do.call('rbind', cov)
       colnames(df) <- c('Sample', 'Depth', 'Count', 'Frequency', 'CumFrequency')
 
-      setwd('plots/coverage/{ref}/{kind}/{platform}_{manifest}')
+      setwd('plots/coverage/{ref}/{kind}/{platform}_{manifest}_{left}_{right}')
 
       p <- ggplot( data = df, aes( x = Depth, y = CumFrequency, colour = Sample ) ) 
       p <- p + geom_line() + xlim(0, 500) + ylim(0.7, 1.0)
