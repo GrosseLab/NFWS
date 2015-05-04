@@ -5,20 +5,6 @@
 #                                                                           #
 #############################################################################
 
-rule trimmomatic_pe:
-    input: fastqs = lambda wildcards: map( lambda f: "data/reads/raw/" + f, config["units"][wildcards.unit])
-    output: "data/reads/filtered/{unit}_P1.fastq.gz",
-            "data/reads/filtered/{unit}_U1.fastq.gz",
-            "data/reads/filtered/{unit}_P2.fastq.gz",
-            "data/reads/filtered/{unit}_U2.fastq.gz"
-    shell: "java -jar /usr/local/bin/Trimmomatic-0.33/trimmomatic-0.33.jar PE -phred33 "
-           "{input.fastqs} "
-           "{output[0]} "
-           "{output[1]} "
-           "{output[2]} "
-           "{output[3]} "
-           "{config[trim_param]}"
-
 rule trimmomatic_se:
     input: fastqs = lambda wildcards: map( lambda f: "data/reads/raw/" + f, config["units"][wildcards.unit])
     output: "data/reads/filtered/{unit}_P1.fastq.gz",
@@ -26,4 +12,3 @@ rule trimmomatic_se:
            "{input.fastqs} "
            "{output} "
            "{config[trim_param]}"
-    

@@ -16,7 +16,7 @@ rule trusight_one_hg37_manifest:
     """Downloads trusight one kit manifest, clean up and extend target regions."""
     output: config["ref_dir"] + "/illumina/hg37/kits/trusightone.bed"
     shell: """
-    wget -q -O - {ILLUMINA_URL}/downloads/productfiles/trusight/trusight-one-bed-may-2014.zip | gunzip -cd > |
+    wget -q -O - {ILLUMINA_URL}/downloads/productfiles/trusight/trusight-one-bed-may-2014.zip | gunzip -cd |
     sed 's/\.chr[1-9,X,Y]\+//' |
     sed 's/\./-/g' > {output}
     """

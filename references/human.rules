@@ -57,8 +57,6 @@ rule download_mirbase:
     output: config["ref_dir"] + "/all/mirbase/mature.fa"
     shell: "wget -q -O - {MIRBASE_URL}/mature.fa.gz | gunzip > {output}"
 
-rule extract_human_mirbase:
-    input: config["ref_dir"] + "/all/mirbase/mature.fa"
-    output: config["ref_dir"] + "/human/hg38/mirbase/human_mature.fa"
-    shell: "grep -A 1 Homo {input} | sed '/^--$/d' > {output}"
-
+rule download_mirbase_human:
+    output: config["ref_dir"] + "/human/hg38/mirbase/hsa.gff"
+    shell: "wget -q -O - {MIRBASE_URL}/genomes/hsa.gff3 | gunzip > {output}"
