@@ -1,7 +1,0 @@
-
-rule fastqc:
-    """Computes quality reports for read data sets."""
-    input: "data/reads/{sample}.fastq.gz"
-    output: "results/qa/fastqc/{sample}_fastqc.zip"
-    threads: 6
-    shell: "fastqc -t {threads} --outdir {output} {input}"
