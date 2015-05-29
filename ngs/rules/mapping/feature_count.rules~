@@ -1,8 +1,0 @@
-
-rule htseq_count:
-    input: bam = "results/mapping/{sample}.bam",
-           gtf = lambda wildcards: config["features"][wildcards.featurefile]
-    output: "results/de/{sample}.count"
-    params: feature = config["features"]["type"]
-    shell: 
-    
