@@ -13,7 +13,7 @@ sophisticated approach. Thats why we are porting all our workflows to
 
 *Note: Every workflow is a work-in-progress an should be handeld as such.*
 
-## Want the repository contains
+## What the repository contains
 
 A list of all the workflows we are trying to port should follow soon.
 
