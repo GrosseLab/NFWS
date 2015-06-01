@@ -47,6 +47,7 @@ rule plot_regions:
       features <- df[(df[,'Feature'] == f),]
       p <- ggplot( data = features, aes( x = Position, y = Coverage, colour = Sample) )
       p <- p + geom_line() + geom_hline( aes(yintercept = 100)) 
+      p <- p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
       p <- p + geom_vline( xintercept = 0, colour="grey", linetype = "longdash" )
       p <- p + geom_vline( aes( xintercept = End - Start - {left} - {right} ), colour="grey", linetype = "longdash" )
       p <- p + facet_wrap( ~ Region, scales = 'free_x' )
