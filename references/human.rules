@@ -53,10 +53,20 @@ rule download_hg37_to_hg38:
 
 MIRBASE_URL = "ftp://mirbase.org/pub/mirbase/CURRENT"
 
-rule download_mirbase:
+rule download_mirbase_mature:
     output: config["ref_dir"] + "/all/mirbase/mature.fa"
     shell: "wget -q -O - {MIRBASE_URL}/mature.fa.gz | gunzip > {output}"
 
-rule download_mirbase_human:
-    output: config["ref_dir"] + "/human/hg38/mirbase/hsa.gff"
-    shell: "wget -q -O - {MIRBASE_URL}/genomes/hsa.gff3 | gunzip > {output}"
+rule generate_mirbase_mature_human:
+    input: config["ref_dir"] + "/all/mirbase/mature.fa"
+    output: config["ref_dir"] + "/human/hg38/mirbase/mature.fa"
+    shell: "grep -A 1 '^>hsa' {input} | grep -v '^-' | sed 's/U/T/g' > {output}"
+
+rule download_mirbase_hairpin:
+    output: config["ref_dir"] + "/all/mirbase/hairpin.fa"
+    shell: "wget -q -O - {MIRBASE_URL}/hairpin.fa.gz | gunzip > {output}"
+
+rule generate_mirbase_hairpin_human:
+    input: config["ref_dir"] + "/all/mirbase/hairpin.fa"
+    output: config["ref_dir"] + "/human/hg38/mirbase/hairpin.fa"
+    shell: "grep -A 1 '^>hsa' {input} | grep -v '^-' | sed 's/U/T/g' > {output}"
