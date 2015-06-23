@@ -20,6 +20,12 @@ rule genome_hg37_download:
     output: config["ref_dir"] + "/human/hg38/genome/hg37.fa"
     shell: "wget -q -O - ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | gunzip -cd > {output}"
 
+######### GENE ANNOTATION
+
+rule gene_hg38_download:
+    output: config["ref_dir"] + "/human/hg38/genes/all.gtf"
+    shell: "wget -q -O - ftp://ftp.ensembl.org/pub/release-80/gtf/homo_sapiens/Homo_sapiens.GRCh38.80.gtf.gz | gunzip -cd > {output}"
+
 ######### VARIANT DATABASES
 
 ## dbSNP hg38

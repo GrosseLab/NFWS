@@ -15,8 +15,8 @@ rule target_coverage:
 rule target_bad_coverage:
     """Only output Regions under a given covergae"""
     input: "results/coverage/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}.cov"
-    output: "results/coverage/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}_lower{mincov}.cov"
-    shell: "cat {input} | awk '$6 < {mincov}' > {output}"
+    output: "results/coverage/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}.lower{mincov}"
+    shell: "cat {input} | awk '$6 < {wildcards.mincov}' > {output}"
 
 rule target_coverage_hist:
     """Compute per base coverage of sequenced regions."""
