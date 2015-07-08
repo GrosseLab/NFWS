@@ -12,9 +12,9 @@ ILLUMINA_URL = "http://support.illumina.com/content/dam/illumina-support/documen
 
 # trusight one kit
 
-rule trusight_one_hg37_manifest:
+rule trusight_one_hg19_manifest:
     """Downloads trusight one kit manifest, clean up and extend target regions."""
-    output: config["ref_dir"] + "/illumina/hg37/kits/trusightone.bed"
+    output: config["ref_dir"] + "/illumina/hg19/kits/trusightone.bed"
     shell: """
     wget -q -O - {ILLUMINA_URL}/downloads/productfiles/trusight/trusight-one-bed-may-2014.zip | gunzip -cd |
     sed 's/\.chr[1-9,X,Y]\+//' |
@@ -23,9 +23,9 @@ rule trusight_one_hg37_manifest:
 
 # trusight cancer kit
 
-rule trusight_cancer_hg37_manifest:
+rule trusight_cancer_hg19_manifest:
     """Downloads trusight cancer kit manifest, clean up and extend target regions."""
-    output: config["ref_dir"] + "/illumina/hg37/kits/trusightcancer.bed"
+    output: config["ref_dir"] + "/illumina/hg19/kits/trusightcancer.bed"
     shell: """
     wget -q -O - {ILLUMINA_URL}/documentation/chemistry_documentation/trusight/trusight_cancer_manifest_a.bed | 
     sed 's/\.chr[1-9,X,Y]\+//' {input} |
@@ -36,8 +36,8 @@ rule trusight_cancer_hg37_manifest:
 
 rule adjust_manifest:
     """Extends the targeted regions in a manifest file."""
-    input: config["ref_dir"] + "/illumina/hg37/kits/{manifest}.bed"
-    output: config["ref_dir"] + "/illumina/hg37/kits/{manifest}_{left}_{right}.bed"
+    input: config["ref_dir"] + "/illumina/hg19/kits/{manifest}.bed"
+    output: config["ref_dir"] + "/illumina/hg19/kits/{manifest}_{left}_{right}.bed"
     shell: """
            awk '{{
            split( $4, splitFeature, "-" )
@@ -46,10 +46,10 @@ rule adjust_manifest:
            print $1 "\t" left "\t" right "\t" splitFeature[1] "-" left "-" right}}' {input} > {output}
            """
 
-rule lift_manifest_from_hg37_to_hg38:
-    """Lifts manifests for hg37 to hg38."""
-    input: bed = config["ref_dir"] + "/illumina/hg37/kits/{manifest}.bed",
-           chain = config["ref_dir"] + "/human/hg37/chains/hg19ToHg38.over.chain"
+rule lift_manifest_from_hg19_to_hg38:
+    """Lifts manifests for hg19 to hg38."""
+    input: bed = config["ref_dir"] + "/illumina/hg19/kits/{manifest}.bed",
+           chain = config["ref_dir"] + "/human/hg19/chains/hg19ToHg38.over.chain"
     output: bed = config["ref_dir"] + "/illumina/hg38/kits/{manifest}.bed",
             unmapped = config["ref_dir"] + "/illumina/hg38/kits/{manifest}.bed"
     shell: """

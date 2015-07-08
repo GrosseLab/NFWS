@@ -9,13 +9,13 @@
 
 rule realign_info:
    """Determines critical regions for realignment."""
-    input: bam = "results/mapping/{reference}/{kind}/{prefix}.bam",
-           bai = "results/mapping/{reference}/{kind}/{prefix}.bam.bai",
+    input: bam = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam",
+           bai = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam.bai",
            dbsnp = config["ref_dir"] + config["known_variants"]["dbsnp"],
            ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
            idx = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference] + ".fai",
            seqdic = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference][:-3] + ".dict"
-    output: "results/mapping/{reference}/{kind}/{prefix}_realign_intervals.list"
+    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}_realign_intervals.list"
     threads: 10
     shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
            "-T RealignerTargetCreator "
@@ -27,11 +27,11 @@ rule realign_info:
 
 rule realign_reads:
     """Realigns reads on critical regions."""
-    input: bam = "results/mapping/{reference}/{kind}/{prefix}.bam",
-           bai = "results/mapping/{reference}/{kind}/{prefix}.bam.bai",
+    input: bam = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam",
+           bai = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam.bai",
            ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
-           interval = "results/mapping/{reference}/{kind}/{prefix}_realign_intervals.list"
-    output: "results/mapping/{reference}/{kind}/{prefix}_realign.bam"
+           interval = "results/mapping/{mapper}/{reference}/{kind}/{prefix}_realign_intervals.list"
+    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}_realign.bam"
     shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
            "-T IndelRealigner "
            "--disable_bam_indexing "
@@ -45,11 +45,11 @@ rule realign_reads:
 rule recalibrate_info:
     input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
            dbsnp = config["ref_dir"] + config["known_variants"]["dbsnp"],
-           bam = "results/mapping/{reference}/{kind}/{prefix}.bam",
-           bai = "results/mapping/{reference}/{kind}/{prefix}.bam.bai"
-    output: "results/mapping/{reference}/{kind}/{prefix}_recalibrate.grp"
+           bam = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam",
+           bai = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam.bai"
+    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}_recalibrate.grp"
     log:
-        "results/mapping/log/{reference}/{kind}/{prefix}_recalibrate_info.log"
+        "results/mapping/{mapper}/log/{reference}/{kind}/{prefix}_recalibrate_info.log"
     threads: 8
     shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
            "-T BaseRecalibrator -R {input.ref} "
@@ -60,10 +60,10 @@ rule recalibrate_info:
     
 rule recalibrate_bam:
     input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
-           bam = "results/mapping/{reference}/{kind}/{prefix}.bam",
-           grp = "results/mapping/{reference}/{kind}/{prefix}_recalibrate.grp"
-    output: "results/mapping/{reference}/{kind}/{prefix}_recalibrated.bam"
-    log: "results/mapping/log/{reference}/{kind}/{prefix}_recalibrate.log"
+           bam = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam",
+           grp = "results/mapping/{mapper}/{reference}/{kind}/{prefix}_recalibrate.grp"
+    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}_recalibrated.bam"
+    log: "results/mapping/{mapper}/log/{reference}/{kind}/{prefix}_recalibrate.log"
     threads: 8
     shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
            "-T PrintReads -R {input.ref} "
@@ -76,9 +76,9 @@ rule recalibrate_bam:
 
 rule haplotype_caller:
     input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
-           bam = "results/mapping/{reference}/{kind}/{prefix}.bam",
-           bai = "results/mapping/{reference}/{kind}/{prefix}.bam.bai"
-    output: "results/variants/{reference}/{kind}/{prefix}.vcf"
+           bam = "results/mapping/bwa/{reference}/{kind}/{prefix}.bam",
+           bai = "results/mapping/bwa/{reference}/{kind}/{prefix}.bam.bai"
+    output: "results/variants/gatk/{reference}/{kind}/{prefix}.vcf"
     shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
            "-T HaplotypeCaller "
            "-R {input.ref} "

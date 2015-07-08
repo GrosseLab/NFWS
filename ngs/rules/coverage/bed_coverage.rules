@@ -7,20 +7,20 @@
 
 rule target_coverage:
     """Compute per base coverage of sequenced regions."""
-    input: bam = "results/mapping/{ref}/{kind}/{unit}.bam", 
+    input: bam = "results/mapping/{mapper}/{ref}/{kind}/{unit}.bam", 
            manifest = config["ref_dir"] + "/{platform}/{ref}/kits/{manifest}_{bef}_{aft}.bed" 
-    output: "results/coverage/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}.cov"
-    shell: "/usr/local/bin/bedtools/bin/bedtools coverage -split -d -abam {input.bam} -b {input.manifest} > {output}"
+    output: "results/coverage/{mapper}/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}.cov"
+    shell: "/usr/local/bin/bedtools coverage -split -d -abam {input.bam} -b {input.manifest} > {output}"
 
 rule target_bad_coverage:
     """Only output Regions under a given covergae"""
-    input: "results/coverage/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}.cov"
-    output: "results/coverage/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}.lower{mincov}"
+    input: "results/coverage/{mapper}/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}.cov"
+    output: "results/coverage/{mapper}/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}.lower{mincov}"
     shell: "cat {input} | awk '$6 < {wildcards.mincov}' > {output}"
 
 rule target_coverage_hist:
     """Compute per base coverage of sequenced regions."""
-    input: bam = "results/mapping/{ref}/{kind}/{unit}.bam",
+    input: bam = "results/mapping/{mapper}/{ref}/{kind}/{unit}.bam",
            manifest = config["ref_dir"] + "/{platform}/{ref}/kits/{manifest}_{bef}_{aft}.bed" 
-    output: "results/coverage/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}.hist"
-    shell: "/usr/local/bin/bedtools/bin/bedtools coverage -hist -abam {input.bam} -b {input.manifest} | grep ^all > {output}"
+    output: "results/coverage/{mapper}/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}.hist"
+    shell: "/usr/local/bin/bedtools coverage -hist -abam {input.bam} -b {input.manifest} | grep ^all > {output}"
