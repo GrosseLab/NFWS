@@ -40,6 +40,7 @@ rule adjust_manifest:
     output: config["ref_dir"] + "/illumina/hg19/kits/{manifest}_{left}_{right}.bed"
     shell: """
            awk '{{
+           gsub(/\r/, "")
            split( $4, splitFeature, "-" )
            left = $2 - {wildcards.left}
            right = $3 + {wildcards.right}
