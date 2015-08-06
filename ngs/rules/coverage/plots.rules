@@ -7,69 +7,82 @@
 
 from snakemake.utils import R
 
+ruleorder: plot_hist > plot_regions
+
 rule plot_regions:
     """Produces coverage plots for each gene in the manifest file."""
-    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{unit}_illumina_trusightcancer_20_20.cov", unit = config["units"].keys() )
-    output: "plots/coverage/{mapper}/{ref}/{kind}/BRCA1.pdf"
+    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{unit}_" + config["platform"] + "_" + config["manifest"] + "_20_20.cov", unit = config["units"].keys() )
+    output: "plots/coverage/{mapper}/{ref}/{kind}/{anyregion}.pdf"
     run: 
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
       mapper = wildcards.mapper,
       ref = wildcards.ref,
       kind = wildcards.kind,
-      platform = "illumina",
-      manifest = "trusightcancer",
+      platform = config["platform"],
+      manifest = config["manifest"],
       left = "20",
       right = "20",
       run = config["run"],
       R("""
       library(ggplot2)
+      library(data.table)
 
       files <- {files}
       labels <- sub( '_.*', "", basename(files)) # extract sample names
-      cov <- list()
+      coverages<-list()
       for (i in seq_along(files)) {{
-      cov[[i]] <- read.table(files[i])
-      cov[[i]] <- cbind( labels[i], cov[[i]])
+        coverages[[i]] <- fread(files[i], sep="\t")
+        coverages[[i]] <- cbind( labels[i], coverages[[i]])
+        setnames(coverages[[i]], c("Sample", "Chromosome", "Start", "End", "FeatureRegion", "Position", "Coverage"))
       }}
 
-      df <- do.call('rbind', cov)
-      regions <- sub(".*?-", "", df[,5]) # delete gene name (? activates non-greedy evaluation of regex)
-      features <- sub("-.*", "", df[,5]) # delete coordinates
-      
-      df <- data.frame( Sample = df[,1], Chromosome = df[,2], Start = df[,3], End = df[,4], Feature = features, 
-      Region = regions, Position = df[,6], Coverage = df[,7])
-      df[,'Position'] <- df[, 'Position'] - {left}
+      dt <- do.call('rbind', coverages)
+      dt[,Region := sub(".*?-", "", dt[,FeatureRegion])] # delete gene name (? activates non-greedy evaluation of regex)
+      dt[,Feature := sub("-.*", "", dt[,FeatureRegion])] # delete coordinates
+      dt[,Position := dt[,Position - {left}]]
+
+      setkey(dt, Feature)
 
       setwd('plots/coverage/{mapper}/{ref}/{kind}/')
 
-      for (f in levels( df[,'Feature'] ) ) {{
+      for (f in unique( dt[,Feature] ) ) {{
       filename <- paste(f, ".pdf", sep = '')
       cat(paste("Plotting", filename))
-      features <- df[(df[,'Feature'] == f),]
+      features <- dt[f,]
       p <- ggplot( data = features, aes( x = Position, y = Coverage, colour = Sample) )
       p <- p + geom_line() + geom_hline( aes(yintercept = 100)) 
-      p <- p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
+      
       p <- p + geom_vline( xintercept = 0, colour="grey", linetype = "longdash" )
       p <- p + geom_vline( aes( xintercept = End - Start - {left} - {right} ), colour="grey", linetype = "longdash" )
       p <- p + facet_wrap( ~ Region, scales = 'free_x' )
       p <- p + ggtitle( paste('Coverage of target regions in', f, 'on', features[1,'Chromosome'], 'in {ref}, run: {run}') )
       p <- p + theme( plot.title = element_text( face = 'bold', vjust = 2 ) )
-      ggsave( file = filename, plot = p, width = 10, height = 10, title = paste("Coverage of target regions in", f) )      
+      p <- p + ggtitle(paste("Coverage of target regions in", f))
+      
+      q <- p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
+
+      pdf(filename, width = 10, height = 10)
+      print(p)
+      print(q)
+      dev.off()
+
+      # ggsave( file = filename, plot = p, width = 10, height = 10, title = paste("Coverage of target regions in", f) )      
       }}
       """)
 
 
 rule plot_hist:
     """Produces a summary plot of target coverage."""
-    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{unit}_illumina_trusightcancer_20_20.hist", unit = config["units"].keys() )
+    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{unit}_" + config["platform"] + "_" + config["manifest"] + "_20_20.hist", unit = config["units"].keys() )
     output: "plots/coverage/{mapper}/{ref}/{kind}/Total.pdf"
+    priority: 20
     run:
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
       mapper = wildcards.mapper,
       ref = wildcards.ref,
       kind = wildcards.kind,
-      platform = "illumina",
-      manifest = "trusightcancer",
+      platform = config["platform"],
+      manifest = config["manifest"],
       left = "20",
       right = "20",
       run = config["run"],
@@ -81,7 +94,7 @@ rule plot_hist:
       cov <- list()
 
       for (i in seq_along(files)) {{
-      cov[[i]] <- read.table(files[i])
+      cov[[i]] <- read.table(files[i], sep="\t")
       cov[[i]] <- cov[[i]][,c(-1, -4)] # drop first column
       cov[[i]] <- cbind( cov[[i]], 1 - cumsum( cov[[i]][,3] ) ) # add cummulative frequency of depth
       cov[[i]] <- cbind( labels[i], cov[[i]]) # add label column
