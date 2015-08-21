@@ -26,6 +26,10 @@ rule gene_hg38_download:
     output: config["ref_dir"] + "/human/hg38/genes/all.gtf"
     shell: "wget -q -O - ftp://ftp.ensembl.org/pub/release-80/gtf/homo_sapiens/Homo_sapiens.GRCh38.80.gtf.gz | gunzip -cd > {output}"
 
+rule gene_hg19_download:
+    output: config["ref_dir"] + "/human/hg19/genes/all.gtf"
+    shell: "wget -q -O - ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz | gunzip -cd > {output}"
+
 ######### VARIANT DATABASES
 
 ## dbSNP hg38
