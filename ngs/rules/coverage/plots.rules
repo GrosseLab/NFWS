@@ -45,28 +45,29 @@ rule plot_regions:
 
       setwd('plots/coverage/{mapper}/{ref}/{kind}/')
 
-      for (f in unique( dt[,Feature] ) ) {{
+      for (f in c('BRCA1')){{#unique( dt[,Feature] ) ) {{
       filename <- paste(f, ".pdf", sep = '')
       cat(paste("Plotting", filename))
       features <- dt[f,]
-      p <- ggplot( data = features, aes( x = Position, y = Coverage, colour = Sample) )
+
+      p <- ggplot( data = features, aes( x = Position, y = Coverage, colour = Sample ))
       p <- p + geom_line() + geom_hline( aes(yintercept = 100)) 
       
-      p <- p + geom_vline( xintercept = 0, colour="grey", linetype = "longdash" )
-      p <- p + geom_vline( aes( xintercept = End - Start - {left} - {right} ), colour="grey", linetype = "longdash" )
+      p <- p + geom_vline( xintercept = 0.5, colour="grey", linetype = "longdash" )
+      p <- p + geom_vline( aes( xintercept = End - Start - {left} - {right} + 0.5 ), colour="grey", linetype = "longdash" )
+      #p <- p + scale_x_continuous( 'Position' , aes(breaks = c(1, End - Start - 1)))
       p <- p + facet_wrap( ~ Region, scales = 'free_x' )
-      p <- p + ggtitle( paste('Coverage of target regions in', f, 'on', features[1,'Chromosome'], 'in {ref}, run: {run}') )
+      p <- p + ggtitle( paste('Coverage of target regions in', f, 'on', features[1,Chromosome], 'in {ref}, run: {run}') )
       p <- p + theme( plot.title = element_text( face = 'bold', vjust = 2 ) )
-      p <- p + ggtitle(paste("Coverage of target regions in", f))
       
-      q <- p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
+      p2 <- p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
 
       pdf(filename, width = 10, height = 10)
       print(p)
-      print(q)
+      print(p2)
       dev.off()
 
-      # ggsave( file = filename, plot = p, width = 10, height = 10, title = paste("Coverage of target regions in", f) )      
+      # ggsave( file = filename, plot = p, width = 10, height = 10)      
       }}
       """)
 

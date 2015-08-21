@@ -42,9 +42,9 @@ rule adjust_manifest:
            awk '{{
            gsub(/\r/, "")
            split( $4, splitFeature, "-" )
-           left = $2 - {wildcards.left}
-           right = $3 + {wildcards.right}
-           print $1 "\t" left "\t" right "\t" splitFeature[1] "-" left "-" right}}' {input} > {output}
+           newleft = $2 - {wildcards.left} + 1
+           newright = $3 + {wildcards.right}
+           print $1 "\t" newleft "\t" newright "\t" splitFeature[1] "-" newleft "-" newright}}' {input} > {output}
            """
 
 rule lift_manifest_from_hg19_to_hg38:
