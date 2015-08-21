@@ -8,16 +8,16 @@
 
 ######### GENOMES
 
-## genome hg 38
+## genome hg38
 
 rule genome_hg38_download:
     output: config["ref_dir"] + "/human/hg38/genome/hg38.fa"
     shell: "wget -q -O {output} ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_reference_genome/hs38DH.fa"
 
-## genome hg 37
+## genome hg19
 
 rule genome_hg37_download:
-    output: config["ref_dir"] + "/human/hg38/genome/hg37.fa"
+    output: config["ref_dir"] + "/human/hg19/genome/hg37.fa"
     shell: "wget -q -O - ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | gunzip -cd > {output}"
 
 ######### GENE ANNOTATION
@@ -37,9 +37,9 @@ rule dbsnp_hg38_download:
     output: config["ref_dir"] + "/human/hg38/snp/dbsnp142.vcf"
     shell: "wget -q -O - ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/All_20150218.vcf.gz | gunzip -cd | sed 's/^\([^#]\)/chr\1/' > {output}"
 
-##dbSNP hg37
-rule dbsnp_hg37_download:
-    output: config["ref_dir"] + "/human/hg37/snp/dbsnp142.vcf"
+##dbSNP hg19
+rule dbsnp_hg19_download:
+    output: config["ref_dir"] + "/human/hg19/snp/dbsnp142.vcf"
     shell: "wget -q -O - ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b142_GRCh37p13/VCF/All_20150217.vcf.gz | gunzip -cd | sed 's/^\([^#]\)/chr\1/' > {output}"
 
 ## HapMap
@@ -53,7 +53,7 @@ rule dbsnp_hg37_download:
 
 ######### CHAINS
 
-rule download_hg37_to_hg38:
+rule download_hg19_to_hg38:
     output: config["ref_dir"] + "/human/hg37/chains/hg19ToHg38.over.chain"
     shell: "wget -q -O - http://hgdownload.cse.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz | gunzip -cd > {output}"
 
