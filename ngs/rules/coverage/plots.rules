@@ -45,7 +45,7 @@ rule plot_regions:
 
       setwd('plots/coverage/{mapper}/{ref}/{kind}/')
 
-      for (f in c('BRCA1')){{#unique( dt[,Feature] ) ) {{
+      for (f in unique( dt[,Feature] ) ) {{
       filename <- paste(f, ".pdf", sep = '')
       cat(paste("Plotting", filename))
       features <- dt[f,]
