@@ -2,10 +2,10 @@
 rule fastqc:
     """
     Computes quality reports for read data sets.
-    Note that the 'prefix' can be applied to any subdirectory in data/reads.
+    Note that the 'kind' can be applied to any subdirectory in data/reads.
     E.g. Reads in data/reads/RAW result in a QA report in results/qa/fastqc/RAW
     """
-    input: "data/reads/{prefix}.fastq.gz"
-    output: "results/qa/fastqc/{prefix}_fastqc.zip"
+    input: right = "data/reads/{kind}/{file}.fastq.gz"
+    output: "results/qa/fastqc/{kind}/{file}_fastqc.html"
     threads: 6
-    shell: "fastqc -t {threads} --outdir {output} {input}"
+    shell: "fastqc -t {threads} --outdir results/qa/fastqc/{wildcards.kind} {input}"
