@@ -41,11 +41,38 @@ rule adjust_manifest:
     shell: """
            awk '{{
            gsub(/\r/, "")
-           split( $4, splitFeature, "-" )
            newleft = $2 - {wildcards.left} + 1
            newright = $3 + {wildcards.right}
-           print $1 "\t" newleft "\t" newright "\t" splitFeature[1] "-" newleft "-" newright}}' {input} > {output}
+           print $1 "\t" newleft "\t" newright "\t" $4}}' {input} > {output}
            """
+
+rule add_ensemble_transcripts_to_manifest:
+    """Extend the manifest with selected transcripts from ensemble"""
+    input:
+      manifest = config["ref_dir"] + "/illumina/{ref}/kits/{manifest}.bed",
+      # transcript_list = config["ref_dir"] + "/illumina/{ref}/kits/{manifest}_ENST.txt",
+      ensemble_gtf = config["ref_dir"] + "/human/{ref}/genes/all.gtf"
+    output: config["ref_dir"] + "/illumina/{ref}/kits/{manifest}_ensemble.bed"
+    shell: """
+        # cat {input.manifest} > {output}
+        cut -f 4 {input.manifest} | cut -d "-" -f 1 | awk '{{print "gene_name \\"" $1 "\\";"}}' | grep -f - {input.ensemble_gtf} | grep -P "protein_coding\tCDS" | awk '{{
+        gsub(/[;"]/, "")
+        print "chr" $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16
+        }}' >> {output}
+        """
+
+# rule find_ensemble_transcripts:
+#     """Extract als ensemble transcript-IDs for genes in a manifest"""
+#     input:
+#         manifest = config["ref_dir"] + "/illumina/{ref}/kits/{manifest}.bed",
+#         ensemble_gtf = config["ref_dir"] + "/human/{ref}/genes/all.gtf"
+#     output: config["ref_dir"] + "/illumina/{ref}/kits/{manifest}_ENST.txt"
+#     shell: """
+#         cut -f 4 {input.manifest} | cut -d "-" -f 1 | grep -f - {input.ensemble_gtf} | grep -P "protein_coding\texon" | awk'{{
+#         gsub(/[;"]/, "")
+#         print $12
+#         }}' | uniq > {output}
+#         """
 
 rule lift_manifest_from_hg19_to_hg38:
     """Lifts manifests for hg19 to hg38."""

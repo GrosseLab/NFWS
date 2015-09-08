@@ -26,6 +26,7 @@ rule plot_regions:
       R("""
       library(ggplot2)
       library(data.table)
+      library(gridExtra)
 
       files <- {files}
       labels <- sub( '_.*', "", basename(files)) # extract sample names
@@ -33,41 +34,61 @@ rule plot_regions:
       for (i in seq_along(files)) {{
         coverages[[i]] <- fread(files[i], sep="\t")
         coverages[[i]] <- cbind( labels[i], coverages[[i]])
-        setnames(coverages[[i]], c("Sample", "Chromosome", "Start", "End", "FeatureRegion", "Position", "Coverage"))
+        setnames(coverages[[i]], c("Sample", "Chromosome", "Start", "End", "FeatureRegionName", "Position", "Coverage"))
       }}
 
       dt <- do.call('rbind', coverages)
-      dt[,Region := sub(".*?-", "", dt[,FeatureRegion])] # delete gene name (? activates non-greedy evaluation of regex)
-      dt[,Feature := sub("-.*", "", dt[,FeatureRegion])] # delete coordinates
+      dt[,RegionName := sub(".*?-", "", dt[,FeatureRegionName])]
+      dt[,Region := as.numeric(sub("-.*", "", dt[,RegionName]))]
+      dt[,Feature := sub("-.*", "", dt[,FeatureRegionName])]
+      dt[,Name := sub(".*-", "", dt[,FeatureRegionName])]
       dt[,Position := dt[,Position - {left}]]
-
       setkey(dt, Feature)
 
       setwd('plots/coverage/{mapper}/{ref}/{kind}/')
-
+      
       for (f in unique( dt[,Feature] ) ) {{
-      filename <- paste(f, ".pdf", sep = '')
-      cat(paste("Plotting", filename))
-      features <- dt[f,]
-
-      p <- ggplot( data = features, aes( x = Position, y = Coverage, colour = Sample ))
-      p <- p + geom_line() + geom_hline( aes(yintercept = 100)) 
       
-      p <- p + geom_vline( xintercept = 0.5, colour="grey", linetype = "longdash" )
-      p <- p + geom_vline( aes( xintercept = End - Start - {left} - {right} + 0.5 ), colour="grey", linetype = "longdash" )
-      #p <- p + scale_x_continuous( 'Position' , aes(breaks = c(1, End - Start - 1)))
-      p <- p + facet_wrap( ~ Region, scales = 'free_x' )
-      p <- p + ggtitle( paste('Coverage of target regions in', f, 'on', features[1,Chromosome], 'in {ref}, run: {run}') )
-      p <- p + theme( plot.title = element_text( face = 'bold', vjust = 2 ) )
-      
-      p2 <- p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
+        cat(paste("Plotting", dt[f,Name][1], f))
+        features <- split(dt[f,], f=dt[f,Region])
 
-      pdf(filename, width = 10, height = 10)
-      print(p)
-      print(p2)
-      dev.off()
+        nd<-function(x, top=10){{
+          pages <- ceiling(x/top)
+          d<-top
+          while(ceiling(x/d) == pages) {{
+            d <- d-1
+          }}
+          return(d+1)
+        }}
 
-      # ggsave( file = filename, plot = p, width = 10, height = 10)      
+        features2 <- list()
+
+        plots_per_page <- nd(length(features))
+
+        for (i in seq(1,length(features), plots_per_page)) {{
+          features2 <- c(features2, list(do.call(rbind, features[i:min(i+plots_per_page-1, length(features))])))
+        }}
+
+        plots<-lapply(features2, function(features){{
+              p <- ggplot( data = features, aes( x = Position, y = Coverage, colour = Sample ))
+              p <- p + geom_line() + geom_hline( aes(yintercept = 100)) 
+
+              p <- p + geom_vline( xintercept = 0.5, colour="grey", linetype = "longdash" )
+              p <- p + geom_vline( aes( xintercept = End - Start - {left} - {right} + 0.5 ), colour="grey", linetype = "longdash" )
+
+              p <- p + facet_wrap( ~ Region, scales = 'free_x', ncol=1 )
+              
+              p <- p + labs(title = paste0('Coverage of ', f, '(', features[1,Name], ') on ', features[1,Chromosome], ' in {ref}, run: {run}'), x='Position in Exon' )
+              p <- p + theme(plot.title = element_text(size = rel(0.8)))
+              return(p)
+        }})
+
+        pdf(paste0(dt[f,Name][1], '-', f, ".pdf"), paper="a4", height=11.692, width=8.267)
+          lapply(plots, print)
+          lapply(plots, function(p){{
+            print(p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
+          )}}) 
+        dev.off()
       }}
       """)
 
