@@ -55,7 +55,7 @@ rule add_ensemble_transcripts_to_manifest:
     output: config["ref_dir"] + "/illumina/{ref}/kits/{manifest}_ensemble.bed"
     shell: """
         # cat {input.manifest} > {output}
-        cut -f 4 {input.manifest} | cut -d "-" -f 1 | awk '{{print "gene_name \\"" $1 "\\";"}}' | grep -f - {input.ensemble_gtf} | grep -P "protein_coding\tCDS" | awk '{{
+        cut -f 4 {input.manifest} | cut -d "-" -f 1 | uniq | awk '{{print "gene_name \\"" $1 "\\";"}}' | grep -f - {input.ensemble_gtf} | grep -P "protein_coding\tCDS" | grep 'tag "CCDS";' | awk '{{
         gsub(/[;"]/, "")
         print "chr" $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16
         }}' >> {output}
