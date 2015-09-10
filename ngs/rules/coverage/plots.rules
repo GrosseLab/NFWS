@@ -52,14 +52,7 @@ rule plot_regions:
         cat(paste("Plotting", dt[f,Name][1], f))
         features <- split(dt[f,], f=dt[f,Region])
 
-        nd<-function(x, top=10){{
-          pages <- ceiling(x/top)
-          d<-top
-          while(ceiling(x/d) == pages) {{
-            d <- d-1
-          }}
-          return(d+1)
-        }}
+        nd<-function(x, top=10){{return(ceiling(x/ceiling(x/top)))}}
 
         features2 <- list()
 
