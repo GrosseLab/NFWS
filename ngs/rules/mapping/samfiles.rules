@@ -10,7 +10,7 @@ rule bam_sort_coord:
     input: "{prefix}.bam"
     output: "{prefix}_coord.bam"
     threads: 10
-    shell: "samtools sort -@ {threads} -m 10G {input} {wildcards.prefix}_coord"
+    shell: "samtools sort -@ {threads} -m 4G {input} {wildcards.prefix}_coord"
 
 rule bam_sort_name:
     """Sort alignments by read name."""
