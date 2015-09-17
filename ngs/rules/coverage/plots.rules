@@ -11,7 +11,7 @@ ruleorder: plot_hist > plot_regions
 
 rule plot_regions:
     """Produces coverage plots for each gene in the manifest file."""
-    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{unit}_" + config["platform"] + "_" + config["manifest"] + "_20_20.cov", unit = config["units"].keys() )
+    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_" + config["platform"] + "_" + config["manifest"] + "_20_20.cov", sample = config["samples"].keys() )
     output: "plots/coverage/{mapper}/{ref}/{kind}/{anyregion}.pdf"
     run: 
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
@@ -88,7 +88,7 @@ rule plot_regions:
 
 rule plot_hist:
     """Produces a summary plot of target coverage."""
-    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{unit}_" + config["platform"] + "_" + config["manifest"] + "_20_20.hist", unit = config["units"].keys() )
+    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_" + config["platform"] + "_" + config["manifest"] + "_20_20.hist", sample = config["samples"].keys() )
     output: "plots/coverage/{mapper}/{ref}/{kind}/Total.pdf"
     priority: 20
     run:

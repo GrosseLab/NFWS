@@ -10,7 +10,7 @@ UNIT_TO_SAMPLE = {
     unit: sample for sample, units in config["samples"].items()
     for unit in units }
 
-BWA_INDEX_SUFFIXES = [ ".amb", ".ann", ".bwt", ".pac", ".sa" ]
+BWA_INDEX_SUFFIXES = [ "", ".amb", ".ann", ".bwt", ".pac", ".sa" ]
 
 rule bwa_index:
     """Creates an index of a fasta file."""
@@ -18,26 +18,25 @@ rule bwa_index:
     output: expand("{{prefix}}.fa{suf}", suf = BWA_INDEX_SUFFIXES)
     shell: "bwa index {input}"
 
-def _get_ref_files(wildcards):
-    """Fetches the reference file from the config and attaches all auxillary files."""
-    ref = config["ref_dir"] + config["references"][wildcards.reference] # reference in ref dir
-    return map( lambda suf: ref + suf, [""] +  BWA_INDEX_SUFFIXES)
+#def _get_ref_files(wildcards):
+#    """Fetches the reference file from the config and attaches all auxillary files."""
+#    refere = config["ref_dir"] + config["references"]["hg19"] # reference in ref dir
+#    return map( lambda suf: refere + suf, [""] +  BWA_INDEX_SUFFIXES)
 
 rule bwa_mem_map:
     """Maps reads specified in the config file (of a given kind (e.g. raw or trimmed)) on a reference sequence."""
     input:
-        ref = _get_ref_files,
-        left = "data/reads/{kind}/{unit}_P1.fastq.gz",
-        right = "data/reads/{kind}/{unit}_P2.fastq.gz",
+        lambda wildcards: config["ref_dir"] + config["references"][wildcards.genome],
+        lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit])
     output:
-        "results/mapping/bwa/{reference}/{kind}/{unit}.bam"
+        "results/mapping/{mapper}/{genome}/{kind}/{unit}.bam"
     params:
         sample = lambda wildcards: UNIT_TO_SAMPLE[wildcards.unit]
     log: 
-        "results/mapping/log/bwa/{reference}/{kind}/{unit}_bwa_mem.log"
-    threads: 10
+        "results/mapping/log/bwa/{genome}/{kind}/{unit}_bwa_mem.log"
+    threads: 8
     shell: "bwa mem -M " # picard compatibility
            "-R '@RG\\tID:{wildcards.unit}\\t"
            "SM:{params.sample}\\tPL:{config[platform]}' "
-           "-t {threads} {input.ref[0]} {input.left} {input.right} 2> {log} "
+           "-t {threads} {input} 2> {log} "
            "| samtools view -Sbh - > {output}"
