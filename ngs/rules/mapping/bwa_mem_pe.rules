@@ -39,4 +39,4 @@ rule bwa_mem_map:
            "-R '@RG\\tID:{wildcards.unit}\\t"
            "SM:{params.sample}\\tPL:{config[platform]}' "
            "-t {threads} {input} 2> {log} "
-           "| samtools view -Sbh - > samtools sort @ {threads} -m 4G -o > {output}"
+           "| samtools view -Sbh - > {output}"
