@@ -11,7 +11,7 @@ rule target_coverage:
         ref = config["ref_dir"] + "/{platform}/{ref}/kits/{manifest}_ensemble_{bef}_{aft}.bed",
         bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}.bam", unit = config["samples"][wildcards.sample])          
     output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{platform}_{manifest}_{bef}_{aft}.cov"
-    shell: "samtools merge - {input.bams} | bedtools coverage -split -d -abam stdin -b {input.ref} > {output}"
+    shell: "samtools merge - {input.bams} | bedtools coverage -split -d -b stdin -a {input.ref} > {output}"
 
 rule target_bad_coverage:
     """Only output Regions under a given covergae"""
@@ -21,7 +21,7 @@ rule target_bad_coverage:
 
 rule target_coverage_hist:
     """Compute per base coverage of sequenced regions."""
-    input: bam = "results/mapping/{mapper}/{ref}/{kind}/{unit}.bam",
+    input: bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" +      wildcards.kind + "/{unit}.bam", unit = config["samples"][wildcards.sample]),
            manifest = config["ref_dir"] + "/{platform}/{ref}/kits/{manifest}_ensemble_{bef}_{aft}.bed" 
     output: "results/coverage/{mapper}/{ref}/{kind}/{unit}_{platform}_{manifest}_{bef}_{aft}.hist"
-    shell: "bedtools coverage -hist -abam {input.bam} -b {input.manifest} | grep ^all > {output}"
+    shell: "samtools merge - {input.bams} | bedtools coverage -hist -abam stdin -b {input.manifest} | grep ^all > {output}"
