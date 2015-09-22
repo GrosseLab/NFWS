@@ -16,9 +16,13 @@ rule genome_hg38_download:
 
 ## genome hg19
 
-rule genome_hg37_download:
-    output: config["ref_dir"] + "/human/hg19/genome/hg37.fa"
-    shell: "wget -q -O - ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | gunzip -cd > {output}"
+rule genome_hg19_download:
+    output: config["ref_dir"] + "/human/hg19/genome/hg19.fa"
+    shell: "wget -q -O - ftp://ftp-trace.ncbi.nih.gov//1000genomes/ftp/technical/reference/human_g1k_v37.fasta.gz | gunzip -cd > {output}"
+
+rule hg19_ucsc_rm_download:
+    output: config["ref_dir"] + "/human/hg19/genome/hg19_ucsc_rm.fa"
+    shell: "wget -q -O - http://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/chromFaMasked.tar.gz | tar -xOz > {output}"
 
 ######### GENE ANNOTATION
 

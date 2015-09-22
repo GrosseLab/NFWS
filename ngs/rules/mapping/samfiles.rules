@@ -14,8 +14,8 @@ rule bam_sort_coord:
 
 rule bam_sort_name:
     """Sort alignments by read name."""
-    input: "{prefix}_coord.bam"
-    output: "{prefix}.bam"
+    input: "{prefix}.bam"
+    output: "{prefix}_name.bam"
     threads: 8
     shell: "samtools sort -n -@ {threads} -m 2G -o {output} {input}"
 
