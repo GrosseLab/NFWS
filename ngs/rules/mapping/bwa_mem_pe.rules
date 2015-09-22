@@ -29,12 +29,12 @@ rule bwa_mem_map:
         lambda wildcards: config["ref_dir"] + config["references"][wildcards.genome],
         lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit])
     output:
-        "results/mapping/bwa/{genome}/{kind}/{unit}.bam"
+        "results/mapping/bwa/{genome}/{kind}/{unit}_name.bam"
     params:
         sample = lambda wildcards: UNIT_TO_SAMPLE[wildcards.unit]
     log: 
         "results/mapping/bwa/{genome}/{kind}/log/{unit}_bwa_mem.log"
-    threads: 20
+    threads: 19
     shell: "bwa mem -M " # picard compatibility
            "-R '@RG\\tID:{wildcards.unit}\\t"
            "SM:{params.sample}\\tPL:{config[platform]}' "
