@@ -18,18 +18,15 @@ rule bwa_index:
     output: expand("{{prefix}}.fa{suf}", suf = BWA_INDEX_SUFFIXES)
     shell: "bwa index {input}"
 
-#def _get_ref_files(wildcards):
-#    """Fetches the reference file from the config and attaches all auxillary files."""
-#    refere = config["ref_dir"] + config["references"]["hg19"] # reference in ref dir
-#    return map( lambda suf: refere + suf, [""] +  BWA_INDEX_SUFFIXES)
-
 rule bwa_mem_map:
     """Maps reads specified in the config file (of a given kind (e.g. raw or trimmed)) on a reference sequence."""
     input:
-        lambda wildcards: config["ref_dir"] + config["references"][wildcards.genome],
-        lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit])
+        ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.genome],
+        bwaindex = lambda wildcards: expand(config["ref_dir"] + config["references"][wildcards.genome] + "{suf}", suf = BWA_INDEX_SUFFIXES),
+        fastqs = lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit]),
+
     output:
-        "results/mapping/bwa/{genome}/{kind}/{unit}_name.bam"
+        "results/mapping/bwa/{genome}/{kind}/{unit}.bam"
     params:
         sample = lambda wildcards: UNIT_TO_SAMPLE[wildcards.unit]
     log: 
@@ -38,5 +35,5 @@ rule bwa_mem_map:
     shell: "bwa mem -M " # picard compatibility
            "-R '@RG\\tID:{wildcards.unit}\\t"
            "SM:{params.sample}\\tPL:{config[platform]}' "
-           "-t {threads} {input} 2> {log} "
+           "-t {threads} {input.ref} {input.fastqs} 2> {log} "
            "| samtools view -Sbh - > {output}"
