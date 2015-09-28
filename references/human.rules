@@ -22,7 +22,7 @@ rule genome_hg19_download:
 
 rule hg19_ucsc_rm_download:
     output: config["ref_dir"] + "/human/hg19/genome/hg19_ucsc_rm.fa"
-    shell: "wget -q -O - http://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/chromFaMasked.tar.gz | tar -xOz > {output}"
+    shell: "wget -q -O - --user=gsapubftp-anonymous ftp://ftp.broadinstitute.org//bundle/2.8/hg19/ucsc.hg19.fasta.gz | gunzip -cd > {output}"
 
 ######### GENE ANNOTATION
 

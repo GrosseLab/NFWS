@@ -6,21 +6,25 @@
 #############################################################################
 
 # Local realignment around indels
+# see http://gatkforums.broadinstitute.org/discussion/1247/what-should-i-use-as-known-variantssites-for-running-tool-x and ftp://ftp.broadinstitute.org//bundle/2.8/hg19 for used SNP/Indel-DBs
+
+ruleorder: gatk_genotyping_all > gatk_genotyping
 
 rule realign_info:
    """Determines critical regions for realignment."""
     input: bam = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam",
            bai = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam.bai",
-           dbsnp = config["ref_dir"] + config["known_variants"]["dbsnp"],
+           snpdb_1 = config["ref_dir"] + "/human/{reference}/snp/Mills_and_1000G_gold_standard.indels.{reference}.sites.vcf",
+           snpdb_2 = config["ref_dir"] + "/human/{reference}/snp/1000G_phase1.indels.{reference}.sites.vcf",
            ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
            idx = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference] + ".fai",
            seqdic = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference][:-3] + ".dict"
-    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}_realign_intervals.list"
-    threads: 10
-    shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
-           "-T RealignerTargetCreator "
+    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}.realign.intervals.list"
+    threads: 8
+    shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T RealignerTargetCreator "
            "-nt {threads} "
-           "-known {input.dbsnp} "
+           "-known {input.snpdb_1} "
+           "-known {input.snpdb_2} "
            "-R {input.ref} "
            "-I {input.bam} "
            "-o {output}"
@@ -30,57 +34,92 @@ rule realign_reads:
     input: bam = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam",
            bai = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam.bai",
            ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
-           interval = "results/mapping/{mapper}/{reference}/{kind}/{prefix}_realign_intervals.list"
-    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}_realign.bam"
-    shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
-           "-T IndelRealigner "
+           snpdb_1 = config["ref_dir"] + "/human/{reference}/snp/Mills_and_1000G_gold_standard.indels.{reference}.sites.vcf",
+           snpdb_2 = config["ref_dir"] + "/human/{reference}/snp/1000G_phase1.indels.{reference}.sites.vcf",
+           interval = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.realign.intervals.list"
+    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}.realign.bam"
+    shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T IndelRealigner "
            "--disable_bam_indexing "
            "-R {input.ref} "
            "-I {input.bam} "
+           "-known {input.snpdb_1} "
+           "-known {input.snpdb_2} "
            "-targetIntervals {input.interval} "
            "-o {output}"
+           "; rm {input.interval}"
 
 # Quality score recalibration
 
 rule recalibrate_info:
     input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
-           dbsnp = config["ref_dir"] + config["known_variants"]["dbsnp"],
+           snpdb_1 = config["ref_dir"] + "/human/{reference}/snp/Mills_and_1000G_gold_standard.indels.{reference}.sites.vcf",
+           snpdb_2 = config["ref_dir"] + "/human/{reference}/snp/1000G_phase1.indels.{reference}.sites.vcf",
+           snpdb_3 = config["ref_dir"] + "/human/{reference}/snp/dbsnp_138.{reference}.vcf",
            bam = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam",
            bai = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam.bai"
-    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}_recalibrate.grp"
-    log:
-        "results/mapping/{mapper}/log/{reference}/{kind}/{prefix}_recalibrate_info.log"
+    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}.recalibrate.grp"
     threads: 8
-    shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
-           "-T BaseRecalibrator -R {input.ref} "
+    shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T BaseRecalibrator -R {input.ref} "
            "-nct {threads} "
            "-I {input.bam} "
-           "-knownSites {input.dbsnp} "
-           "-o {output} >& {log}"
+           "-knownSites {input.snpdb_1} "
+           "-knownSites {input.snpdb_2} "
+           "-knownSites {input.snpdb_3} "
+           "-o {output}"
     
 rule recalibrate_bam:
     input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
            bam = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam",
-           grp = "results/mapping/{mapper}/{reference}/{kind}/{prefix}_recalibrate.grp"
-    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}_recalibrated.bam"
-    log: "results/mapping/{mapper}/log/{reference}/{kind}/{prefix}_recalibrate.log"
+           grp = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.recalibrate.grp"
+    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}.recalibrated.bam"
     threads: 8
-    shell: "java -Xmx50g -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
-           "-T PrintReads -R {input.ref} "
+    shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T PrintReads -R {input.ref} "
            "-nct {threads} "
            "--disable_bam_indexing "
            "-I {input.bam} -BQSR {input.grp} "
-           "-o {output} >& {log}"
+           "-o {output}"
+           "; rm {input.grp}"
 
 # Haplotype caller
 
 rule haplotype_caller:
-    input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
-           bam = "results/mapping/bwa/{reference}/{kind}/{prefix}.bam",
-           bai = "results/mapping/bwa/{reference}/{kind}/{prefix}.bam.bai"
-    output: "results/variants/gatk/{reference}/{kind}/{prefix}.vcf"
-    shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.2-2/GenomeAnalysisTK.jar "
-           "-T HaplotypeCaller "
+    input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref],
+           bams = lambda wildcards: expand("results/mapping/bwa/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord.realign.recalibrated.bam", unit = config["samples"][wildcards.patient]),
+           bais = lambda wildcards: expand("results/mapping/bwa/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord.realign.recalibrated.bam.bai", unit = config["samples"][wildcards.patient]),
+           snpdb = config["ref_dir"] + "/human/{ref}/snp/dbsnp_138.{ref}.vcf"
+    output: "results/variants/gatk/{ref}/{kind}/{patient}.g.vcf"
+    run: 
+      bams = " -I ".join(input.bams)
+      shell("java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T HaplotypeCaller "
            "-R {input.ref} "
-           "-I {input.bam} "
-           "-o {output}"
+           "-I {bams} "
+           "--emitRefConfidence GVCF "
+           "--variant_index_type LINEAR "
+           "--variant_index_parameter 128000 "
+           "--dbsnp {input.snpdb} "
+           "-o {output}")
+
+rule gatk_genotyping_all:
+    input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref],
+           gvcfs = lambda wildcards: expand("results/variants/gatk/" + wildcards.ref + "/" + wildcards.kind + "/{patient}.g.vcf", patient=config["samples"].keys())
+    output: "results/variants/gatk/{ref}/{kind}/all.vcf"
+    threads: 15
+    run:
+      gvcfs = " --variant ".join(input.gvcfs)
+      shell("java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T GenotypeGVCFs "
+            "--variant {gvcfs} "
+            "-nt {threads} "
+            "-R {input.ref} "
+            "-o {output}")
+
+rule gatk_genotyping:
+    input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref],
+           gvcf = "results/variants/gatk/{ref}/{kind}/{patient}.g.vcf"
+    output: "results/variants/gatk/{ref}/{kind}/{patient}.vcf"
+    threads: 15
+    run:
+      shell("java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T GenotypeGVCFs "
+            "--variant {input.gvcf} "
+            "-nt {threads} "
+            "-R {input.ref} "
+            "-o {output}")
