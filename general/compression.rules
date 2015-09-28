@@ -1,0 +1,13 @@
+rule gzip:
+    """gzip any file for compression"""
+    input: "{file}"
+    output: "{file}.gz"
+    threads: 8
+    shell: "pigz -p {threads} {input}"
+
+# rule gunzip:
+#     """unzip any file for access"""
+#     input: "{file}.gz"
+#     output: "{file}"
+#     threads: 8
+#     shell: "pigz -d -p {threads} {input}"
