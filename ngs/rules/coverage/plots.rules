@@ -13,6 +13,7 @@ rule plot_regions:
     """Produces coverage plots for each gene in the manifest file."""
     input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_" + config["platform"] + "_" + config["manifest"] + "_20_20.cov", sample = config["samples"].keys() )
     output: "plots/coverage/{mapper}/{ref}/{kind}/{anyregion}.pdf"
+    threads: 48
     run: 
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
       mapper = wildcards.mapper,
@@ -27,6 +28,7 @@ rule plot_regions:
       library(ggplot2)
       library(data.table)
       library(gridExtra)
+      library(parallel)
 
       files <- {files}
       labels <- sub( '_.*', "", basename(files)) # extract sample names
@@ -47,10 +49,15 @@ rule plot_regions:
 
       setwd('plots/coverage/{mapper}/{ref}/{kind}/')
       
-      for (f in unique( dt[,Feature] ) ) {{
-      
-        cat(paste("Plotting", dt[f,Name][1], f))
-        features <- split(dt[f,], f=dt[f,Region])
+      split_table <- split(dt, dt[,Feature])
+
+      #for (f in unique( dt[,Feature] ) ) {{
+      mclapply(split_table, function(f_table){{
+
+        f <- f_table[1,Feature]
+
+        cat(paste("Plotting", f_table[,Name][1], f))
+        features <- split(f_table, f=f_table[,Region])
 
         nd<-function(x, top=10){{return(ceiling(x/ceiling(x/top)))}}
 
@@ -82,7 +89,8 @@ rule plot_regions:
             print(p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
           )}}) 
         dev.off()
-      }}
+      #}}
+      }}, mc.cores = {threads})
       """)
 
 
