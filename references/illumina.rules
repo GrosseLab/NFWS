@@ -35,15 +35,15 @@ rule trusight_cancer_hg19_manifest:
 ## UTILITIES
 
 rule adjust_manifest:
-    """Extends the targeted regions in a manifest file."""
-    input: config["ref_dir"] + "/illumina/hg19/kits/{manifest}.bed"
-    output: config["ref_dir"] + "/illumina/hg19/kits/{manifest}_{left}_{right}.bed"
+    """Extends the targeted regions in a manifest file. also: sort a manifest file by Chromosome (chr1, chr2, ... chr10, ...) and by start"""
+    input: "{manifest}.bed"
+    output: "{manifest}_{left}_{right}.bed"
     shell: """
            awk '{{
            gsub(/\r/, "")
            newleft = $2 - {wildcards.left} + 1
            newright = $3 + {wildcards.right}
-           print $1 "\t" newleft "\t" newright "\t" $4}}' {input} > {output}
+           print $1 "\t" newleft "\t" newright "\t" $4}}' {input} | sort -k1,2V > {output}
            """
 
 rule add_ensemble_transcripts_to_manifest:
