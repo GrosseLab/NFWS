@@ -11,7 +11,7 @@ rule target_coverage:
         ref = config["ref_dir"] + "/{platform}/{ref}/kits/{manifest}_ensemble_{bef}_{aft}.bed",
         bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord.bam", unit = config["samples"][wildcards.sample])          
     output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{platform}_{manifest}_{bef}_{aft}.cov"
-    threads: 5
+    threads: 15
     run:
         if len(input.bams) == 1:
             command = "cat"
@@ -31,7 +31,7 @@ rule target_coverage_hist:
         bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord.bam", unit = config["samples"][wildcards.sample]),
         manifest = config["ref_dir"] + "/{platform}/{ref}/kits/{manifest}_ensemble_{bef}_{aft}.bed" 
     output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{platform}_{manifest}_{bef}_{aft}.hist"
-    threads: 5
+    threads: 15
     run:
         if len(input.bams) == 1:
             command = "cat"
