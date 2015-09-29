@@ -19,7 +19,7 @@ rule realign_info:
            ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
            idx = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference] + ".fai",
            seqdic = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference][:-3] + ".dict"
-    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}.realign.intervals.list"
+    output: temp("results/mapping/{mapper}/{reference}/{kind}/{prefix}.realign.intervals.list")
     threads: 8
     shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T RealignerTargetCreator "
            "-nt {threads} "
@@ -46,7 +46,6 @@ rule realign_reads:
            "-known {input.snpdb_2} "
            "-targetIntervals {input.interval} "
            "-o {output}"
-           "; rm {input.interval}"
 
 # Quality score recalibration
 
@@ -57,7 +56,7 @@ rule recalibrate_info:
            snpdb_3 = config["ref_dir"] + "/human/{reference}/snp/dbsnp_138.{reference}.vcf",
            bam = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam",
            bai = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam.bai"
-    output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}.recalibrate.grp"
+    output: temp("results/mapping/{mapper}/{reference}/{kind}/{prefix}.recalibrate.grp")
     threads: 8
     shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T BaseRecalibrator -R {input.ref} "
            "-nct {threads} "
@@ -78,7 +77,6 @@ rule recalibrate_bam:
            "--disable_bam_indexing "
            "-I {input.bam} -BQSR {input.grp} "
            "-o {output}"
-           "; rm {input.grp}"
 
 # Haplotype caller
 

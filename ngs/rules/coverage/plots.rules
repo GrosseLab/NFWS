@@ -50,6 +50,7 @@ rule plot_regions:
       setwd('plots/coverage/{mapper}/{ref}/{kind}/')
       
       split_table <- split(dt, dt[,Feature])
+      rm(dt)
 
       #for (f in unique( dt[,Feature] ) ) {{
       mclapply(split_table, function(f_table){{
@@ -83,7 +84,7 @@ rule plot_regions:
               return(p)
         }})
 
-        pdf(paste0(dt[f,Name][1], '-', f, ".pdf"), paper="a4", height=11.692, width=8.267)
+        pdf(paste0(f_table[,Name][1], '-', f, ".pdf"), paper="a4", height=11.692, width=8.267)
           lapply(plots, print)
           lapply(plots, function(p){{
             print(p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
