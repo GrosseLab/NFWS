@@ -8,7 +8,7 @@
 rule target_coverage:
     """Compute per base coverage of sequenced regions."""
     input:
-        ref = config["ref_dir"] + "/{platform}/{ref}/kits/{manifest}_ensemble_{bef}_{aft}.bed",
+        ref = "results/annotation/featureCounts/{mapper}/{ref}/{kind}/generated_manifest_{bef}_{aft}.bed",
         bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord.bam", unit = config["samples"][wildcards.sample])          
     output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{platform}_{manifest}_{bef}_{aft}.cov"
     # threads: 15
@@ -18,6 +18,17 @@ rule target_coverage:
         else:
             command = "samtools merge -"
         shell("{command} {input.bams} | /usr/local/bin/bedtools2-2.22.1/bedtools2/bin/bedtools coverage -split -d -abam stdin -b {input.ref} > {output}")
+
+rule generate_manifest:
+    """Generate a manifest-like bed-file. Contains covered regions"""
+    input:
+        ensembl = config["ref_dir"] + "/human/{ref}/genes/all.gtf",
+        count = "results/de/featureCounts/{mapper}/{ref}/{kind}/all.counts"
+    output: "results/annotation/featureCounts/{mapper}/{ref}/{kind}/generated_manifest.bed"
+    # threads: 15
+    shell: """
+	    cat {input.count} | grep -v '^#' | awk '{{t=0; for(i=7;i<=NF;i++){{t+=$i}}; if(t>300) print $1;}}' | grep -f - {input.ensembl} | grep -P 'protein_coding\tCDS' | grep 'tag "CCDS";' | awk '{{gsub(/[;"]/, ""); print "chr" $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16;}}' > {output}
+       	"""
 
 rule target_bad_coverage:
     """Only output Regions under a given covergae"""
@@ -29,7 +40,7 @@ rule target_coverage_hist:
     """Compute per base coverage of sequenced regions."""
     input:
         bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord.bam", unit = config["samples"][wildcards.sample]),
-        manifest = config["ref_dir"] + "/{platform}/{ref}/kits/{manifest}_ensemble_{bef}_{aft}.bed" 
+        manifest = "results/annotation/featureCounts/{mapper}/{ref}/{kind}/generated_manifest_{bef}_{aft}.bed"
     output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{platform}_{manifest}_{bef}_{aft}.hist"
     # threads: 15
     run:

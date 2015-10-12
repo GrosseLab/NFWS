@@ -99,7 +99,6 @@ rule plot_hist:
     """Produces a summary plot of target coverage."""
     input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_" + config["platform"] + "_" + config["manifest"] + "_20_20.hist", sample = config["samples"].keys() )
     output: "plots/coverage/{mapper}/{ref}/{kind}/Total.pdf"
-    priority: 20
     run:
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
       mapper = wildcards.mapper,
