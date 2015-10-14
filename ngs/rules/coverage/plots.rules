@@ -27,7 +27,6 @@ rule plot_regions:
       R("""
       library(ggplot2)
       library(data.table)
-      library(gridExtra)
       library(parallel)
 
       files <- {files}
