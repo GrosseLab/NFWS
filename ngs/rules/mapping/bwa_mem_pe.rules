@@ -31,7 +31,7 @@ rule bwa_mem_map:
         sample = lambda wildcards: UNIT_TO_SAMPLE[wildcards.unit]
     log: 
         "results/mapping/bwa/{genome}/{kind}/log/{unit}_bwa_mem.log"
-    threads: 19
+    threads: 15
     shell: "bwa mem -M " # picard compatibility
            "-R '@RG\\tID:{wildcards.unit}\\t"
            "SM:{params.sample}\\tPL:{config[platform]}' "
