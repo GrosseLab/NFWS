@@ -17,7 +17,7 @@ rule target_coverage:
             command = "cat"
         else:
             command = "samtools merge -"
-        shell("{command} {input.bams} | /usr/local/bin/bedtools2-2.22.1/bedtools2/bin/bedtools coverage -split -d -abam stdin -b {input.ref} > {output}")
+        shell("{command} {input.bams} | /usr/local/bin/bedtools2-2.22.1/bin/bedtools coverage -split -d -abam stdin -b {input.ref} > {output}")
 
 rule generate_manifest:
     """Generate a manifest-like bed-file. Contains covered regions"""
@@ -48,4 +48,4 @@ rule target_coverage_hist:
             command = "cat"
         else:
             command = "samtools merge -"
-        shell("{command} {input.bams} | /usr/local/bin/bedtools2-2.22.1/bedtools2/bin/bedtools coverage -hist -abam stdin -b {input.manifest} | grep ^all > {output}")
+        shell("{command} {input.bams} | /usr/local/bin/bedtools2-2.22.1/bin/bedtools coverage -hist -abam stdin -b {input.manifest} | grep ^all > {output}")
