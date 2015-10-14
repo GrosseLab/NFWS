@@ -21,7 +21,7 @@ rule realign_info:
            seqdic = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference][:-3] + ".dict"
     output: temp("results/mapping/{mapper}/{reference}/{kind}/{prefix}.realign.intervals.list")
     threads: 8
-    shell: "gatk -T RealignerTargetCreator "
+    shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T RealignerTargetCreator "
            "-nt {threads} "
            "-known {input.snpdb_1} "
            "-known {input.snpdb_2} "
@@ -38,7 +38,7 @@ rule realign_reads:
            snpdb_2 = config["ref_dir"] + "/human/{reference}/snp/1000G_phase1.indels.{reference}.sites.vcf",
            interval = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.realign.intervals.list"
     output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}.realign.bam"
-    shell: "gatk -T IndelRealigner "
+    shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T IndelRealigner "
            "--disable_bam_indexing "
            "-R {input.ref} "
            "-I {input.bam} "
@@ -58,7 +58,7 @@ rule recalibrate_info:
            bai = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.bam.bai"
     output: temp("results/mapping/{mapper}/{reference}/{kind}/{prefix}.recalibrate.grp")
     threads: 8
-    shell: "gatk -T BaseRecalibrator -R {input.ref} "
+    shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T BaseRecalibrator -R {input.ref} "
            "-nct {threads} "
            "-I {input.bam} "
            "-knownSites {input.snpdb_1} "
@@ -72,7 +72,7 @@ rule recalibrate_bam:
            grp = "results/mapping/{mapper}/{reference}/{kind}/{prefix}.recalibrate.grp"
     output: "results/mapping/{mapper}/{reference}/{kind}/{prefix}.recalibrated.bam"
     threads: 8
-    shell: "gatk -T PrintReads -R {input.ref} "
+    shell: "java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T PrintReads -R {input.ref} "
            "-nct {threads} "
            "--disable_bam_indexing "
            "-I {input.bam} -BQSR {input.grp} "
@@ -90,7 +90,7 @@ rule haplotype_caller:
     run: 
       bams = " -I ".join(input.bams)
       nct = math.floor(threads / len(input.bams))
-      shell("gatk -T HaplotypeCaller "
+      shell("java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T HaplotypeCaller "
            "-R {input.ref} "
            "-I {bams} "
            "--emitRefConfidence GVCF "
@@ -107,7 +107,7 @@ rule gatk_genotyping_all:
     threads: 15
     run:
       gvcfs = " --variant ".join(input.gvcfs)
-      shell("gatk -T GenotypeGVCFs "
+      shell("java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T GenotypeGVCFs "
             "--variant {gvcfs} "
             "-nt {threads} "
             "-R {input.ref} "
@@ -119,7 +119,7 @@ rule gatk_genotyping:
     output: "results/variants/gatk/{ref}/{kind}/{patient}.vcf"
     threads: 15
     run:
-      shell("gatk -T GenotypeGVCFs "
+      shell("java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar -T GenotypeGVCFs "
             "--variant {input.gvcf} "
             "-nt {threads} "
             "-R {input.ref} "
