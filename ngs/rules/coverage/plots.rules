@@ -44,6 +44,8 @@ rule plot_regions:
       dt[,Feature := sub("-.*", "", dt[,FeatureRegionName])]
       dt[,Name := sub(".*-", "", dt[,FeatureRegionName])]
       dt[,Position := dt[,Position - {left}]]
+      dt[,LocationText := paste0(dt[,Chromosome], ":", format(dt[,Start], big.mark = ".", decimal.mark=","), "-", format(dt[,End], big.mark = ".", decimal.mark=","))]
+      dt[,Exon := "Exon"]
       setkey(dt, Feature)
 
       setwd('plots/coverage/{mapper}/{ref}/{kind}/')
@@ -76,9 +78,9 @@ rule plot_regions:
               p <- p + geom_vline( xintercept = 0.5, colour="grey", linetype = "longdash" )
               p <- p + geom_vline( aes( xintercept = End - Start - {left} - {right} + 0.5 ), colour="grey", linetype = "longdash" )
 
-              p <- p + facet_wrap( ~ Region, scales = 'free_x', ncol=1 )
+              p <- p + facet_wrap( ~ Exon + Region + LocationText, scales = 'free_x', ncol=1 )
               
-              p <- p + labs(title = paste0('Coverage of ', f, '(', features[1,Name], ') on ', features[1,Chromosome], ' in {ref}, run: {run}'), x='Position in Exon' )
+              p <- p + labs(title = paste0('Coverage of ', f, '(', features[1,Name], ') in {ref}, run: {run}'), x='Position in Exon' )
               p <- p + theme(plot.title = element_text(size = rel(0.8)))
               return(p)
         }})
