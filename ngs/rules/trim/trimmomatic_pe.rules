@@ -6,12 +6,10 @@
 #############################################################################
 
 rule trimmomatic_pe:
-    input: lambda wildcards: expand("data/reads/raw//{{pre}}{read}{{suf}}.fastq.gz", read=["R1", "R2"])
-    output: expand("data/reads/filtered/{{pre}}{read}{{suf}}.fastq.gz", read=["R1", "R2"])
-            # "data/reads/filtered/{unit}_P1.fastq.gz",
-            # "data/reads/filtered/{unit}_U1.fastq.gz",
-            # "data/reads/filtered/{unit}_P2.fastq.gz",
-            # "data/reads/filtered/{unit}_U2.fastq.gz"
-    threads: 8
-    log: "data/reads/filtered/log/{output[0]}.log"
-    shell: "java -jar /usr/local/bin/Trimmomatic-0.33/trimmomatic-0.33.jar PE -threads {threads} -phred33 {input} {output[0]} {output[0]}.unpaired {output[1]} {output[1]}.unpaired {config[trim_param]} 2> {log}"
+    input: expand("data/reads/raw//{{pre}}{read}{{suf}}.fastq.gz", read=["R1", "R2"])
+    output:
+    	expand("data/reads/filtered/{{pre}}{read}{{suf}}.fastq.gz", read=["R1", "R2"]),
+    	expand("data/reads/filtered/{{pre}}{read}{{suf}}_unpaired.fastq.gz", read=["R1", "R2"])
+    threads: 4
+    log: "data/reads/filtered/log/{pre}R1{suf}.log"
+    shell: "java -jar /usr/local/bin/Trimmomatic-0.33/trimmomatic-0.33.jar PE -threads {threads} -phred33 {input} {output[0]} {output[2]} {output[1]} {output[3]} {config[trim_param]} 2> {log}"
