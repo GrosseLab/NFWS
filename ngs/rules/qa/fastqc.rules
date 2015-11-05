@@ -6,6 +6,6 @@ rule fastqc:
     E.g. Reads in data/reads/RAW result in a QA report in results/qa/fastqc/RAW
     """
     input: "data/reads/{kind}/{file}.fastq.gz"
-    output: "results/qa/fastqc/{kind}/{file}_fastqc.html"
+    output: expand("results/qa/fastqc/{{kind}}/{{file}}_fastqc.{suf}", suf=["html", "zip"])
     threads: 2
     shell: "fastqc -t {threads} --outdir results/qa/fastqc/{wildcards.kind} {input}"
