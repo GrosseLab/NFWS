@@ -13,5 +13,5 @@ rule trimmomatic_pe:
             # "data/reads/filtered/{unit}_P2.fastq.gz",
             # "data/reads/filtered/{unit}_U2.fastq.gz"
     threads: 8
-    log: "data/reads/filtered/log/trimmomatic.log"
+    log: "data/reads/filtered/log/{output[0]}.log"
     shell: "java -jar /usr/local/bin/Trimmomatic-0.33/trimmomatic-0.33.jar PE -threads {threads} -phred33 {input} {output[0]} {output[0]}.unpaired {output[1]} {output[1]}.unpaired {config[trim_param]} 2> {log}"
