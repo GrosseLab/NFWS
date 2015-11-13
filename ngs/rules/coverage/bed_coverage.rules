@@ -34,7 +34,7 @@ rule target_bad_coverage:
     """Only output Regions under a given covergae"""
     input: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{platform}_{manifest}_{bef}_{aft}.cov"
     output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{platform}_{manifest}_{bef}_{aft}.lower{mincov}"
-    shell: "cat {input} | awk '$6 < {wildcards.mincov}' > {output}"
+    shell: """cat {input} | awk '$6 < {wildcards.mincov}' | awk '{print $4 "\t" $5 "\t" $5}' | sort -k1,1 -k2,2n | bedtools merge > {output}"""
 
 rule target_coverage_hist:
     """Compute per base coverage of sequenced regions."""
