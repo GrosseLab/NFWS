@@ -104,7 +104,7 @@ Sample config and Snakefile s will be available in the repository soon as workfl
     0.1p1
     │ │ └── Patch level: the results are the same but visualization 
     │ │ 		might have changed
-    │ └── Minor version level: the results might have changed due to 
+    │ └──── Minor version level: the results might have changed due to 
     │			bug fixes or exchange of parameters, software, etc.
-    └── Major version level: new entire workflows are available, 
+    └────── Major version level: new entire workflows are available, 
     			results of exitsing workflows might have changed
