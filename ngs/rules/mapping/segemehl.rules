@@ -1,0 +1,23 @@
+#############################################################################
+#          Rules to map fastq reads to a fasta reference using segemehl.         #
+#                                                                           #
+# Date: 02.01.2015                                                          #
+#                                                                           #
+#############################################################################
+
+rule segemehl_index:
+    """Creates an index of a fasta file."""
+    input: "{file}"
+    output: "{file}.idx" #expand("{{prefix}}{suf}", suf = SEGEMEHL_INDEX_SUFFIXES)
+    shell: "segemehl.x -x {output} -d {input}"
+
+rule segemehl:
+    """Maps reads specified in the config file (of a given kind (e.g. raw or trimmed)) on a reference sequence."""
+    input:
+        ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.genome],
+        index = lambda wildcards: config["ref_dir"] + config["references"][wildcards.genome] + ".idx",
+        fastqs = lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit]),
+    output:
+        "results/mapping/segemehl/{genome}/{kind}/{unit}.bam"
+    threads: 15
+    shell: "segemehl.x --query {input.fastqs[0]} --matefile {input.fastqs[1]} --database {input.ref} --index {input.index} --differences 1 --hitstrategy 1 --threads {threads} --silent --outfile {output}"
