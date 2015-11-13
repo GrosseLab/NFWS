@@ -102,8 +102,9 @@ Sample config and Snakefile s will be available in the repository soon as workfl
 ## Release-Numbering conventions
 
     0.1p1
-    │ │ └── Patch level: the results are the same but visualization might have changed
-    │ └── Minor version level: the results might have changed due to bug fixes or exchange of parameters,
-    │         software, or others
-    └── Major version level: new entire workflows are available, results of exitsing workflows might
-              have changed
+    │ │ └── Patch level: the results are the same but visualization 
+    │ │ 		might have changed
+    │ └── Minor version level: the results might have changed due to 
+    │			bug fixes or exchange of parameters, software, etc.
+    └── Major version level: new entire workflows are available, 
+    			results of exitsing workflows might have changed
