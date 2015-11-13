@@ -16,6 +16,7 @@ sophisticated approach. Thats why we are porting all our workflows to
 ## Required Software
 
 This software is required to be installed in a current version and available via the PATH-variable. Scripts for installation that we use ourselfs are [available here](https://github.com/GrosseLab/InstallProcedures).
+* [snakemake](https://bitbucket.org/johanneskoester/snakemake/wiki/Documentation#markdown-header-installation)
 * bwa
 * segemehl
 * bedtools (current and version 2.22.1 - for reasons)
