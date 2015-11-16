@@ -98,14 +98,14 @@ The most important part of the config is the definition of the reads-samples-pat
         "sampleB": ["S4_R1.fastq.gz", "S4_R2.fastq.gz" ]
     }
     
-Sample config and Snakefile s will be available in the repository soon as workflows.
+Sample config and Snakefile s are available in the repository as workflows.
 
 ## Release-Numbering conventions
 
     v0.1p1
      │ │ └─ Patch level: the results are the same but visualization 
-     │ │         might have changed
+     │ │        might have changed
      │ └─── Minor version level: the results might have changed due to 
-     │           bug fixes or exchange of parameters, software, etc.
-     └───── Major version level: new entire workflows are available, 
+     │          bug fixes or exchange of parameters, software, etc.
+     └───── Major version level: restructuring of naming schema, new entire workflows may be available, 
                 results of exitsing workflows might have changed
