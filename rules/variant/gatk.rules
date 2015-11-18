@@ -9,6 +9,9 @@
 # see http://gatkforums.broadinstitute.org/discussion/1247/what-should-i-use-as-known-variantssites-for-running-tool-x and ftp://ftp.broadinstitute.org//bundle/2.8/hg19 for used SNP/Indel-DBs
 from math import floor
 
+# GenomeAnalysisTK.jar is available via alias gatk
+# e.g. alias gatk="java -jar /usr/local/bin/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar"
+
 ruleorder: gatk_genotyping_all > gatk_genotyping
 
 rule realign_info:
