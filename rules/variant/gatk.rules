@@ -128,9 +128,8 @@ rule gatk_genotyping:
             "-R {input.ref} "
             "-o {output}")
 
-# rule collect_genotypes_for_SNPs:
-#     input: bams = expand("results/mapping/illumina/" + wildcards.ref + "/" + wildcards.kind + "/{sample}_coord_dedup.realign.recalibrated.bam", sample = keys(config["units"])),
-#            snp_list = 
-#     output: "results/variants/gatk/{ref}/{kind}/genotype_rs_SNPs.tsv"
-#     run:
-      
+rule collect_genotypes_for_SNPs:
+    input: bams = lambda wildcards: expand("results/mapping/bwa/" + wildcards.ref + "/" + wildcards.kind + "/{sample}_coord_dedup.realign.recalibrated.bam", sample = config["units"].keys()),
+           snp_list = config["ref_dir"] + "/human/hg19/snp/rs_snps_cf-deepseq.txt"
+    output: "results/variants/gatk/{ref}/{kind}/{any}_rs_SNPs.tsv"
+    shell: "echo {input.bams} | genotype_collector.pl -o {output} -s {input.snp_list}"
