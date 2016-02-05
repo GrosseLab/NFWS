@@ -127,3 +127,10 @@ rule gatk_genotyping:
             "-nt {threads} "
             "-R {input.ref} "
             "-o {output}")
+
+# rule collect_genotypes_for_SNPs:
+#     input: bams = expand("results/mapping/illumina/" + wildcards.ref + "/" + wildcards.kind + "/{sample}_coord_dedup.realign.recalibrated.bam", sample = keys(config["units"])),
+#            snp_list = 
+#     output: "results/variants/gatk/{ref}/{kind}/genotype_rs_SNPs.tsv"
+#     run:
+      
