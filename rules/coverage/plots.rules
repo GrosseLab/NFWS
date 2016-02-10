@@ -39,22 +39,26 @@ rule plot_regions:
       }}
 
       dt <- do.call('rbind', coverages)
-      dt[,RegionName := sub(".*?-", "", dt[,FeatureRegionName])]
-      dt[,Region := as.numeric(sub("-.*", "", dt[,RegionName]))]
-      dt[,Feature := sub("-.*", "", dt[,FeatureRegionName])]
-      dt[,Name := sub(".*-", "", dt[,FeatureRegionName])]
-      dt[,Position := dt[,Position - {left}]]
-      dt[,LocationText := paste0(dt[,Chromosome], ":", format(dt[,Start] + {left} - 1, big.mark = ".", decimal.mark=","), "-", format(dt[,End] - {right}, big.mark = ".", decimal.mark=","))]
-      dt[,Exon := "Exon"]
-      setkey(dt, Feature)
+      rm(coverages)
 
-      setwd('plots/coverage/{mapper}/{ref}/{kind}/')
-      
+      dt[,Feature := sub("-.*", "", dt[,FeatureRegionName])]
+
       split_table <- split(dt, dt[,Feature])
       rm(dt)
 
-      for (f_table in split_table) {{
-      #mclapply(split_table, function(f_table){{
+      split_table <- mclapply(split_table, function(f_table){{
+        f_table[,RegionName := sub(".*?-", "", f_table[,FeatureRegionName])]
+        f_table[,Region := as.numeric(sub("-.*", "", f_table[,RegionName]))]
+        f_table[,Name := sub(".*-", "", f_table[,FeatureRegionName])]
+        f_table[,Position := f_table[,Position - {left}]]
+        f_table[,LocationText := paste0(f_table[,Chromosome], ":", format(f_table[,Start] + {left} - 1, big.mark = ".", decimal.mark=","), "-", format(f_table[,End] - {right}, big.mark = ".", decimal.mark=","))]
+        f_table[,Exon := "Exon"]
+        setkey(f_table, Feature)
+        return(f_table)
+      }}, mc.cores = {threads})
+
+      #for (f_table in split_table) {{
+      mclapply(split_table, function(f_table){{
 
         f <- f_table[1,Feature]
 
@@ -85,14 +89,14 @@ rule plot_regions:
               return(p)
         }})
 
-        pdf(paste0(f_table[,Name][1], '-', f, ".pdf"), paper="a4", height=11.692, width=8.267)
+        pdf(paste0('plots/coverage/bwa/hg19/raw/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
           lapply(plots, print)
           lapply(plots, function(p){{
             print(p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
           )}}) 
         dev.off()
-      }}
-      #}}, mc.cores = {threads})
+      #}}
+      return(NULL)}}, mc.cores = {threads})
       """)
 
 
