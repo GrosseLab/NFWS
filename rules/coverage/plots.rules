@@ -89,7 +89,7 @@ rule plot_regions:
               return(p)
         }})
 
-        pdf(paste0('plots/coverage/bwa/hg19/raw/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
+        pdf(paste0('plots/coverage/{mapper}/{ref}/{kind}/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
           lapply(plots, print)
           lapply(plots, function(p){{
             print(p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
