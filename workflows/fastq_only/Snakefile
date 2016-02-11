@@ -1,0 +1,35 @@
+#############################################################################
+#          Script of the standard trusight cancer pipeline.                 #
+#                                                                           #
+# Date: 02.01.2015                                                          #
+#                                                                           #
+# Example usage: snakemake --snakefile project.snake                        #
+#############################################################################
+
+configfile: "config.json"
+include: "/data/DefaultPipelines/rules/references/human.rules"
+include: "/data/DefaultPipelines/rules/references/illumina.rules"
+include: "/data/DefaultPipelines/rules/trim/trimmomatic_pe.rules"
+include: "/data/DefaultPipelines/rules/mapping/bwa_mem_pe.rules"
+include: "/data/DefaultPipelines/rules/mapping/samfiles.rules"
+include: "/data/DefaultPipelines/rules/mapping/picard.rules"
+include: "/data/DefaultPipelines/rules/coverage/bed_coverage.rules"
+include: "/data/DefaultPipelines/rules/coverage/plots.rules"
+include: "/data/DefaultPipelines/rules/variant/gatk.rules"
+include: "/data/DefaultPipelines/rules/qa/fastqc.rules"
+include: "/data/DefaultPipelines/rules/de/feature_count.rules"
+
+rule all:
+    input: expand("results/qa/fastqc/raw/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
+           #,"plots/coverage/illumina/hg19/filtered/BRCA1-ENST00000357654.pdf"
+           #,"plots/coverage/bwa/hg19/raw/BRCA1-ENST00000357654.pdf"
+           #,"plots/coverage/illumina/hg19/filtered/Total.pdf"
+           #,"plots/coverage/bwa/hg19/raw/Total.pdf"
+           #,expand("results/coverage/illumina/hg19/filtered/{patient}_" + config["platform"] + "_" + config["manifest"] + "_20_20.lower100", patient = config["samples"].keys() )
+           #,expand("results/coverage/illumina/hg19/filtered/{patient}_" + config["platform"] + "_" + config["manifest"] + "_20_20.lower60", patient = config["samples"].keys() )
+           #,expand("results/coverage/illumina/hg19/filtered/{patient}_" + config["platform"] + "_" + config["manifest"] + "_20_20.lower30", patient = config["samples"].keys() )
+           #,expand("results/coverage/illumina/hg19/filtered/{patient}_" + config["platform"] + "_" + config["manifest"] + "_20_20.lower10", patient = config["samples"].keys() )
+           #,expand("results/coverage/bwa/hg19/raw/{patient}_" + config["platform"] + "_" + config["manifest"] + "_20_20.lower100", patient = config["samples"].keys() )
+           #,expand("results/variants/gatk/hg19/raw/{patient}.vcf", patient = config["samples"].keys() )
+           #,"results/variants/gatk/hg19/raw/all.vcf"
+           
