@@ -103,9 +103,10 @@ Sample config and Snakefile s are available in the repository as workflows.
 ## Release-Numbering conventions
 
     v0.1p1
-     │ │ └─ Patch level: the results are the same but visualization 
-     │ │        might have changed
-     │ └─── Minor version level: the results might have changed due to 
-     │          bug fixes or exchange of parameters, software, etc.
-     └───── Major version level: restructuring of naming schema, new entire workflows may be available, 
-                results of exitsing workflows might have changed
+     │ │ └─ Patch level: the results are the same but visualization might have
+     │ │        changed, bugs preventing output might get fixed
+     │ └─── Minor version level: new entire workflows may be available, the
+     │          results might have changed due to bug fixes or exchange of
+     │          parameters, software, etc.
+     └───── Major version level: restructuring of naming schema, results of
+                of exitsing workflows might have changed
