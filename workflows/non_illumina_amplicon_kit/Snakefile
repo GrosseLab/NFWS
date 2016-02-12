@@ -1,10 +1,4 @@
-#############################################################################
-#          Script of the standard trusight cancer pipeline.                 #
-#                                                                           #
-# Date: 02.01.2015                                                          #
-#                                                                           #
-# Example usage: snakemake --snakefile project.snake                        #
-#############################################################################
+# Snakefile for non-Illumina Amplicon-Kit workflow
 
 configfile: "config.json"
 include: "/data/DefaultPipelines/rules/references/human.rules"
