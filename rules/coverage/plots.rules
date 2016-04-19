@@ -99,6 +99,120 @@ rule plot_regions:
       return(NULL)}}, mc.cores = {threads})
       """)
 
+rule plot_CNV_analysis:
+	"""Shows normalized relative coverages to suggest CNV"""
+	input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_" + config["platform"] + "_" + config["manifest"] + "_20_20.cov", sample = config["samples"].keys() )
+	output: "plots/CNV/{mapper}/{ref}/{kind}/{anyregion}.pdf"
+	threads: 48
+	run:
+		files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
+		mapper = wildcards.mapper,
+		ref = wildcards.ref,
+		kind = wildcards.kind,
+		platform = config["platform"],
+		manifest = config["manifest"],
+		left = "20",
+		right = "20",
+		run = config["run"],
+		R("""
+			library(ggplot2)
+			library(data.table)
+			library(parallel)
+
+			files <- {files}
+			labels <- sub( '_.*', "", basename(files)) # extract sample names
+			coverages<-list()
+			for (i in seq_along(files)) {{
+				coverages[[i]] <- fread(files[i], sep="\t")
+				coverages[[i]] <- cbind( labels[i], coverages[[i]])
+				setnames(coverages[[i]], c("Sample", "Chromosome", "Start", "End", "FeatureRegionName", "Position", "Coverage"))
+			}}
+
+			dt <- do.call('rbind', coverages)
+			rm(coverages)
+
+			dt[,Feature := sub("-.*", "", dt[,FeatureRegionName])]
+
+			mean_Cov_perSample<-dt[,mean(Coverage), by=Sample]
+			setkey(mean_Cov_perSample, Sample)
+			setkey(dt, FeatureRegionName, Position, Sample)
+			dt[,scaledCoverage := Coverage / mean_Cov_perSample[, V1] * mean(Coverage)]
+
+			median_scaledCov_perPosition<-dt[,median(scaledCoverage), by=.(FeatureRegionName, Position)]
+			setkey(median_scaledCov_perPosition, FeatureRegionName, Position)
+			setkey(dt, Sample, FeatureRegionName, Position)
+			dt[,relScaledCoverage := 2* scaledCoverage / median_scaledCov_perPosition[, V1] ]
+
+			coverage_hist<-dt[,list(sum=length(relScaledCoverage)) , by=round(scaledCoverage, digits = -1)+1]
+			N<-sum(coverage_hist[,sum])
+			coverage_hist[, sum := sum/N]
+			setkey(coverage_hist, round)
+			dt[,coverageWeight := coverage_hist[round == round(scaledCoverage, digits = -1)+1,sum]]
+
+			nnquantile_perCoverage<-dt[,list(lower=quantile(relScaledCoverage, 0.05 * unique(coverageWeight), na.rm=T, type=8), upper=quantile(relScaledCoverage, 1 - 0.05 * unique(coverageWeight), na.rm=T, type=8)), by=round(scaledCoverage, digits = -1)+1]
+			setkey(nnquantile_perCoverage, round)
+
+			median_scaledCov_perPosition[,lower := nnquantile_perCoverage[round == round(V1, digits = -1)+1, lower]]
+			median_scaledCov_perPosition[,upper := nnquantile_perCoverage[round == round(V1, digits = -1)+1, upper]]
+			setkey(median_scaledCov_perPosition, FeatureRegionName, Position)
+			setkey(dt, Sample, FeatureRegionName, Position)
+			dt[,lower := median_scaledCov_perPosition[, lower] ]
+			dt[,upper := median_scaledCov_perPosition[, upper] ]
+
+			split_table <- split(dt, dt[,Feature])
+			rm(dt)
+
+			split_table <- mclapply(split_table, function(f_table){{
+				f_table[,RegionName := sub(".*?-", "", f_table[,FeatureRegionName])]
+				f_table[,Region := as.numeric(sub("-.*", "", f_table[,RegionName]))]
+				f_table[,Name := sub(".*-", "", f_table[,FeatureRegionName])]
+				f_table[,Position := f_table[,Position - {left}]]
+				f_table[,LocationText := paste0(f_table[,Chromosome], ":", format(f_table[,Start] + {left} - 1, big.mark = ".", decimal.mark=","), "-", format(f_table[,End] - {right}, big.mark = ".", decimal.mark=","))]
+				f_table[,Exon := "Exon"]
+
+				return(f_table)
+			}}, mc.cores = {threads})
+
+			mclapply(split_table, function(f_table){{
+				f <- f_table[1,Feature]
+
+				cat(paste("Plotting", f_table[,Name][1], f))
+				features <- split(f_table, f=f_table[,Region])
+
+				nd<-function(x, top=10){{return(ceiling(x/ceiling(x/top)))}}
+
+				features2 <- list()
+
+				plots_per_page <- nd(length(features))
+
+				for (i in seq(1,length(features), plots_per_page)) {{
+					features2 <- c(features2, list(do.call(rbind, features[i:min(i+plots_per_page-1, length(features))])))
+				}}
+
+				plots<-lapply(features2, function(currfeature){{
+							p <- ggplot( data = currfeature, aes( x = Position, y = relScaledCoverage, colour = Sample))
+							p <- p + geom_line()
+							p <- p + geom_line(aes(y = upper, colour = c("0.99 quantile")), colour = "grey70", size = 0.5)
+							p <- p + geom_line(aes(y = lower, colour = c("0.01 quantile")), colour = "grey70", size = 0.5)
+
+							p <- p + expand_limits(y = c(0, 4))
+							p <- p + geom_vline( xintercept = 0.5, colour="grey", linetype = "longdash" )
+							p <- p + geom_vline( aes( xintercept = End - Start - 20 - 20 + 0.5 ), colour="grey", linetype = "longdash" )
+
+							p <- p + facet_wrap( ~ Exon + Region + LocationText, scales = 'free_x', ncol=1 )
+							
+							p <- p + labs(title = paste0('Coverage of ', f, '(', currfeature[1,Name], ') in {ref}, run: {run}'), x='Position in Exon', y='relative normalisierte Coverage')
+							p <- p + theme(plot.title = element_text(size = rel(0.8)))
+							return(p)
+				}})
+
+				dir.create('plots/CNV/{mapper}/{ref}/{kind}', recursive=T)
+				pdf(paste0('plots/CNV/{mapper}/{ref}/{kind}/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
+					lapply(plots, print)
+				dev.off()
+			return(NULL)}}, mc.cores = {threads})
+		""")
+
 
 rule plot_hist:
     """Produces a summary plot of target coverage."""
