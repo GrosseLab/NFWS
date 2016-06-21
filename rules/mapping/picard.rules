@@ -12,11 +12,11 @@ rule mark_duplicates:
     input: "{path}/{prefix}_coord.bam"
     output: bam = "{path}/{prefix}_coord_dedup.bam",
             metrics = "{path}/dedup_metrics/{prefix}_dedup.report"
-    shell: "java -Xmx4g -jar /usr/local/bin/picard-tools-1.119/MarkDuplicates.jar INPUT={input} OUTPUT={output.bam} METRICS_FILE={output.metrics}"
+    shell: "picard MarkDuplicates INPUT={input} OUTPUT={output.bam} METRICS_FILE={output.metrics}"
 
 
 rule create_seq_dict:
     """Creates a sequence dictionary using a fasta file."""
     input: "{prefix}.fa"
     output: "{prefix}.dict"
-    shell:  "java -jar /usr/local/bin/picard-tools-1.119/CreateSequenceDictionary.jar R= {input} O= {output}"
+    shell:  "picard CreateSequenceDictionary R= {input} O= {output}"
