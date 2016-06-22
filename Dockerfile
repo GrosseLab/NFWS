@@ -26,6 +26,6 @@ RUN mkdir /usr/local/bin/GenomeAnalysisTK-3.6 && mv /usr/gitc/GATK36.jar /usr/lo
 RUN mkdir /usr/local/bin/Picard-1.1080 && mv /usr/gitc/picard.jar /usr/local/bin/Picard-1.1080/ && cp InstallProcedures/picard /usr/local/bin/
 
 # pulling core-facility rules
-RUN mkdir data && cd data && git clone https://github.com/GrosseLab/DefaultPipelines.git
+RUN mkdir data && cd data && git clone --branch Docker https://github.com/GrosseLab/DefaultPipelines.git
 # startup
 ENTRYPOINT ["/bin/bash"]
