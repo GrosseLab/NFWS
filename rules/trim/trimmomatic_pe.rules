@@ -10,6 +10,6 @@ rule trimmomatic_pe:
     output:
     	expand("data/reads/filtered/{{pre}}{read}{{suf}}.fastq.gz", read=["R1", "R2"]),
     	expand("data/reads/filtered/{{pre}}{read}{{suf}}_unpaired.fastq.gz", read=["R1", "R2"])
-    threads: 4
+    threads: 15
     log: "data/reads/filtered/log/{pre}R1{suf}.log"
     shell: "java -jar /usr/local/bin/Trimmomatic-0.33/trimmomatic-0.33.jar PE -threads {threads} -phred33 {input} {output[0]} {output[2]} {output[1]} {output[3]} {config[trim_param]} 2> {log}"

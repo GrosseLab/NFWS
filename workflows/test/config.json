@@ -1,0 +1,50 @@
+{
+    "flowcell_id": "AEVA@",
+    "run": "ML40_test",
+    "manifest": "trusightcancer",
+    "ref_dir": "/data/references_test",
+    "references": {
+    "hg38": "/human/hg38/genome/hg38.fa",
+    "hg19": "/human/hg19/genome/hg19_ucsc_rm.fa"
+    },
+    "known_variants": {
+        "dbsnp": "/human/hg19/snp/dbSNP_hg19_00-All.vcf"
+    },
+    "samples": {
+        "B181-ML40_S1": [ "B181-ML40_S1" ],
+        "B182-ML40_S2": [ "B182-ML40_S2" ],
+        "B183-ML40_S3": [ "B183-ML40_S3" ],
+        "B187-ML40_S4": [ "B187-ML40_S4" ],
+        "B188-ML40_S5": [ "B188-ML40_S5" ],
+        "B189-ML40_S6": [ "B189-ML40_S6" ],
+        "B190-ML40_S7": [ "B190-ML40_S7" ],
+        "D5-ML40_S8": [ "D5-ML40_S8" ]
+    },
+    "units": {
+        "B181-ML40_S1": ["B181-ML40_S1_L001_R1_001.fastq.gz", "B181-ML40_S1_L001_R2_001.fastq.gz" ],
+        "B182-ML40_S2": ["B182-ML40_S2_L001_R1_001.fastq.gz", "B182-ML40_S2_L001_R2_001.fastq.gz" ],
+        "B183-ML40_S3": ["B183-ML40_S3_L001_R1_001.fastq.gz", "B183-ML40_S3_L001_R2_001.fastq.gz" ],
+        "B187-ML40_S4": ["B187-ML40_S4_L001_R1_001.fastq.gz", "B187-ML40_S4_L001_R2_001.fastq.gz" ],
+        "B188-ML40_S5": ["B188-ML40_S5_L001_R1_001.fastq.gz", "B188-ML40_S5_L001_R2_001.fastq.gz" ],
+        "B189-ML40_S6": ["B189-ML40_S6_L001_R1_001.fastq.gz", "B189-ML40_S6_L001_R2_001.fastq.gz" ],
+        "B190-ML40_S7": ["B190-ML40_S7_L001_R1_001.fastq.gz", "B190-ML40_S7_L001_R2_001.fastq.gz" ],
+        "D5-ML40_S8": ["D5-ML40_S8_L001_R1_001.fastq.gz", "D5-ML40_S8_L001_R2_001.fastq.gz" ]
+    },
+    "platform": "illumina",
+    "unit": "MiSeq",
+    "trim_param": "ILLUMINACLIP:/usr/local/bin/Trimmomatic-0.33/adapters/TruSeq3-PE.fa:2:30:10 LEADING:5 TRAILING:5 SLIDINGWINDOW:4:15 MINLEN:36",
+    "project_management_version": "1.0",
+    
+    "description": {
+    "experiment_start": "",
+    "experiment_finish": "",
+    "analysis_start": "31.03.2016",
+    "analysis_finish": "",
+    "keep_until": "",
+    "pi": "",
+    "researcher": "",
+    "institution": "",
+    "emails": [ "" ] ,
+    "text": "",
+    "publication": [""] }
+}
