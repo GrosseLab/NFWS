@@ -10,7 +10,7 @@ rule target_coverage:
     input:
         ref = "results/annotation/featureCounts/{mapper}/{ref}/{kind}/generated_manifest_{bef}_{aft}.bed",
         bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord.bam", unit = config["samples"][wildcards.sample])          
-    output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{platform}_{manifest}_{bef}_{aft}.cov"
+    output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{bef}_{aft}.cov"
     # threads: 15
     run:
         if len(input.bams) == 1:
@@ -33,8 +33,8 @@ rule generate_manifest:
 
 rule target_bad_coverage:
     """Only output Regions under a given covergae"""
-    input: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{platform}_{manifest}_{bef}_{aft}.cov"
-    output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{platform}_{manifest}_{bef}_{aft}.lower{mincov}"
+    input: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{bef}_{aft}.cov"
+    output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{bef}_{aft}.lower{mincov}"
     shell: """cat {input} | awk '$6 < {wildcards.mincov}' | awk '{{print $4 "\t" $5 "\t" $5}}' | sort -k1,1 -k2,2n | bedtools merge -d 5 | awk '{{print $1 "\t" $2-19 "\t" $3-19}}' > {output}"""
 
 rule target_coverage_hist:
@@ -42,7 +42,21 @@ rule target_coverage_hist:
     input:
         bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord.bam", unit = config["samples"][wildcards.sample]),
         manifest = "results/annotation/featureCounts/{mapper}/{ref}/{kind}/generated_manifest_{bef}_{aft}.bed"
-    output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{platform}_{manifest}_{bef}_{aft}.hist"
+    output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{bef}_{aft}.hist"
+    # threads: 15
+    run:
+        if len(input.bams) == 1:
+            command = "cat"
+        else:
+            command = "samtools merge -"
+        shell("{command} {input.bams} | /usr/local/bin/bedtools2-2.22.1/bin/bedtools coverage -hist -abam stdin -b {input.manifest} | grep ^all > {output}")
+
+rule target_gene_coverage:
+    """Compute per base coverage of sequenced regions."""
+    input:
+        bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord.bam", unit = config["samples"][wildcards.sample]),
+        manifest = config["ref_dir"] + "/human/{ref}/genes/diagnostic_genes_{bef}_{aft}.bed"
+    output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_diagnostics_{bef}_{aft}.hist"
     # threads: 15
     run:
         if len(input.bams) == 1:

@@ -7,5 +7,5 @@ rule fastqc:
     """
     input: "data/reads/{kind}/{file}.fastq.gz"
     output: expand("results/qa/fastqc/{{kind}}/{{file}}_fastqc.{suf}", suf=["html", "zip"])
-    threads: 2
+    threads: 1
     shell: "fastqc -t {threads} --outdir results/qa/fastqc/{wildcards.kind} {input}"

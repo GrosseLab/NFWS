@@ -4,7 +4,7 @@ ruleorder: plot_hist > plot_regions
 
 rule plot_regions:
     """Produces coverage plots for each gene in the manifest file."""
-    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_" + config["platform"] + "_" + config["manifest"] + "_20_20.cov", sample = config["samples"].keys() )
+    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
     output: "plots/coverage/{mapper}/{ref}/{kind}/{anyregion}.pdf"
     threads: 48
     run: 
@@ -12,8 +12,8 @@ rule plot_regions:
       mapper = wildcards.mapper,
       ref = wildcards.ref,
       kind = wildcards.kind,
-      platform = config["platform"],
-      manifest = config["manifest"],
+      # platform = config["platform"],
+      # manifest = config["manifest"],
       left = "20",
       right = "20",
       run = config["run"],
@@ -99,7 +99,7 @@ rule plot_regions:
 
 rule plot_CNV_analysis:
   """Shows normalized relative coverages to suggest CNV"""
-  input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_" + config["platform"] + "_" + config["manifest"] + "_20_20.cov", sample = config["samples"].keys() )
+  input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
   output: "plots/CNV/{mapper}/{ref}/{kind}/{anyregion}.pdf"
   threads: 48
   run:
@@ -107,8 +107,8 @@ rule plot_CNV_analysis:
     mapper = wildcards.mapper,
     ref = wildcards.ref,
     kind = wildcards.kind,
-    platform = config["platform"],
-    manifest = config["manifest"],
+    # platform = config["platform"],
+    # manifest = config["manifest"],
     left = "20",
     right = "20",
     run = config["run"],
@@ -136,6 +136,8 @@ rule plot_CNV_analysis:
       setkey(dt, FeatureRegionName, Position, Sample)
       dt[,scaledCoverage := Coverage / mean_Cov_perSample[, V1] * mean(Coverage)]
 
+      queomean<-function(x){{tmp<-x[-order(abs(x-mean(x)), decreasing=T)[1]];return(prod(tmp)^(1/length(tmp)))}}
+
       median_scaledCov_perPosition<-dt[,median(scaledCoverage), by=.(FeatureRegionName, Position)]
       setkey(median_scaledCov_perPosition, FeatureRegionName, Position)
       setkey(dt, Sample, FeatureRegionName, Position)
@@ -147,7 +149,7 @@ rule plot_CNV_analysis:
       setkey(coverage_hist, round)
       dt[,coverageWeight := coverage_hist[round == round(scaledCoverage, digits = -1)+1,sum]]
 
-      nnquantile_perCoverage<-dt[,list(lower=quantile(relScaledCoverage, 0.05 * unique(coverageWeight), na.rm=T, type=8), upper=quantile(relScaledCoverage, 1 - 0.05 * unique(coverageWeight), na.rm=T, type=8)), by=round(scaledCoverage, digits = -1)+1]
+      nnquantile_perCoverage<-dt[,list(lower=quantile(relScaledCoverage, 0.05 * unique(coverageWeight), na.rm=T, type=7), upper=quantile(relScaledCoverage, 1 - 0.05 * unique(coverageWeight), na.rm=T, type=7)), by=round(scaledCoverage, digits = -1)+1]
       setkey(nnquantile_perCoverage, round)
 
       median_scaledCov_perPosition[,lower := nnquantile_perCoverage[round == round(V1, digits = -1)+1, lower]]
@@ -204,7 +206,7 @@ rule plot_CNV_analysis:
 
               p <- p + facet_wrap( ~ Exon + Region + LocationText + Abschnitt + PlotRegion, scales = 'free_x', ncol=1 )
               
-              p <- p + labs(title = paste0('CNV-Analyse von ', f, '(', currfeature[1,Name], ') in {ref}, Lauf: {run}'), x='Position in Exon', y='relative normalisierte Coverage')
+              p <- p + labs(title = paste0('CNV-Analyse von ', f, '(', currfeature[1,Name], ') in {ref}, Lauf: {run}'), x='Position in Exon', y='relative normalisierte Coverage [erwartete Kopienanzahl]')
               p <- p + theme(plot.title = element_text(size = rel(0.8)))
               return(p)
         }})
@@ -219,15 +221,15 @@ rule plot_CNV_analysis:
 
 rule plot_hist:
     """Produces a summary plot of target coverage."""
-    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_" + config["platform"] + "_" + config["manifest"] + "_20_20.hist", sample = config["samples"].keys() )
+    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_diagnostics_20_20.hist", sample = config["samples"].keys() )
     output: "plots/coverage/{mapper}/{ref}/{kind}/Total.pdf"
     run:
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
       mapper = wildcards.mapper,
       ref = wildcards.ref,
       kind = wildcards.kind,
-      platform = config["platform"],
-      manifest = config["manifest"],
+      # platform = config["platform"],
+      # manifest = config["manifest"],
       left = "20",
       right = "20",
       run = config["run"],
@@ -235,7 +237,7 @@ rule plot_hist:
       library(ggplot2)
 
       files <- {files}
-      labels <- sub( '_.*', "", files) # extract sample names
+      labels <- sub( '_.*', "", basename(files)) # extract sample names
       cov <- list()
 
       for (i in seq_along(files)) {{
@@ -251,9 +253,9 @@ rule plot_hist:
       setwd('plots/coverage/{mapper}/{ref}/{kind}/')
 
       p <- ggplot( data = df, aes( x = Depth, y = CumFrequency, colour = Sample ) ) 
-      p <- p + geom_line() + xlim(0, 500) + ylim(0.7, 1.0)
-      p <- p + geom_vline( xintercept = c(20,50,100), linetype = "longdash" )
+      p <- p + geom_line() + xlim(0, 200) + ylim(0.98, 1.0)
+      p <- p + geom_vline( xintercept = seq(30,100,10), linetype = "longdash" )
       p <- p + ggtitle("Coverage distribution in run {run} using {ref}") + xlab("Depth of coverage") 
       p <- p + ylab( sprintf("Fraction of target bases with a coverage >= depth" ) )
-      ggsave( file = "Total.pdf", plot = p, width = 10, height = 10, title = "Coverage distribution of target regions" )
+      ggsave( file = "Total.pdf", plot = p, width = 8.267, height = 11.692, title = "Coverage distribution of target regions" )
       """)
