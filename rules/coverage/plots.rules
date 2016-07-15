@@ -23,7 +23,7 @@ rule plot_regions:
       library(parallel)
 
       files <- {files}
-      labels <- sub( '_.*', "", basename(files)) # extract sample names
+      labels <- sub( '_20_20.cov', "", basename(files)) # extract sample names
       coverages<-list()
       for (i in seq_along(files)) {{
         coverages[[i]] <- fread(files[i], sep="\t")
@@ -118,7 +118,7 @@ rule plot_CNV_analysis:
       library(parallel)
 
       files <- {files}
-      labels <- sub( '_.*', "", basename(files)) # extract sample names
+      labels <- sub( '_20_20.cov', "", basename(files)) # extract sample names
       coverages<-list()
       for (i in seq_along(files)) {{
         coverages[[i]] <- fread(files[i], sep="\t")
@@ -197,8 +197,8 @@ rule plot_CNV_analysis:
         plots<-lapply(features2, function(currfeature){{
               p <- ggplot( data = currfeature, aes( x = Position, y = relScaledCoverage, colour = Sample))
               p <- p + geom_line()
-              p <- p + geom_line(aes(y = upper, colour = c("0.99 Quantil")), colour = "grey70", size = 0.5)
-              p <- p + geom_line(aes(y = lower, colour = c("0.01 Quantil")), colour = "grey70", size = 0.5)
+              p <- p + geom_line(aes(y = upper, colour = c("0.95 Quantil")), colour = "grey70", size = 0.5)
+              p <- p + geom_line(aes(y = lower, colour = c("0.05 Quantil")), colour = "grey70", size = 0.5)
 
               p <- p + expand_limits(y = c(0, 4))
               # p <- p + geom_vline( xintercept = 0.5, colour="grey", linetype = "longdash" )

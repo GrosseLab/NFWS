@@ -9,6 +9,7 @@ include: "/data/DefaultPipelines/rules/mapping/samfiles.rules"
 include: "/data/DefaultPipelines/rules/mapping/picard.rules"
 include: "/data/DefaultPipelines/rules/coverage/bed_coverage.rules"
 include: "/data/DefaultPipelines/rules/coverage/plots.rules"
+include: "/data/DefaultPipelines/rules/coverage/CNV.rules"
 include: "/data/DefaultPipelines/rules/variant/gatk.rules"
 include: "/data/DefaultPipelines/rules/qa/fastqc.rules"
 include: "/data/DefaultPipelines/rules/de/feature_count.rules"
@@ -18,6 +19,7 @@ rule all:
 		"plots/coverage/illumina/hg19/filtered/BRCA1-ENST00000357654.pdf"
 		,"plots/CNV/illumina/hg19/filtered/BRCA1-ENST00000357654.pdf"
 		,"plots/coverage/illumina/hg19/filtered/Total.pdf"
+		,expand("results/CNV/illumina/hg19/filtered/{patient}_CNV.txt", patient = config["samples"].keys() )
 		,expand("results/coverage/illumina/hg19/filtered/{patient}_20_20.lower100", patient = config["samples"].keys() )
 		,expand("results/coverage/illumina/hg19/filtered/{patient}_20_20.lower60", patient = config["samples"].keys() )
 		,expand("results/coverage/illumina/hg19/filtered/{patient}_20_20.lower30", patient = config["samples"].keys() )
