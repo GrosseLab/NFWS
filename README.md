@@ -9,7 +9,7 @@ As we experienced the horror of hundreds of
 \*insert-your-favorite-interpreter-language-here\* scripts floating
 around without any documentation, we felt the need of a more
 sophisticated approach. Thats why we are porting all our workflows to 
-[Snakemake](https://bitbucket.org/johanneskoester/snakemake/wiki/Home).
+[Snakemake](https://bitbucket.org/snakemake/snakemake/wiki/Home).
 
 *Note: Every workflow is a work-in-progress an should be handeld as such. This repository does not make using command-line programs easier. You need to understand how the command-line programs and snakemake work.*
 
