@@ -24,5 +24,5 @@ rule all:
 		,expand("results/coverage/illumina/hg19/filtered/{patient}_20_20.lower60", patient = config["samples"].keys() )
 		,expand("results/coverage/illumina/hg19/filtered/{patient}_20_20.lower30", patient = config["samples"].keys() )
 		,expand("results/coverage/illumina/hg19/filtered/{patient}_20_20.lower10", patient = config["samples"].keys() )
-		,expand("results/qa/fastqc/raw/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
+		,expand("results/qa/fastqc/filtered/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
 		,"results/variants/gatk/hg19/filtered/" + config["run"] + "_rs_SNPs.tsv"
