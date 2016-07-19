@@ -147,7 +147,7 @@ rule plot_CNV_analysis:
       N<-sum(coverage_hist[,sum])
       coverage_hist[, sum := sum/N]
       setkey(coverage_hist, round)
-      dt[,coverageWeight := coverage_hist[round == round(scaledCoverage, digits = -1)+1,sum]]
+      dt[,coverageWeight := coverage_hist[round(scaledCoverage, digits = -1)+1,sum]]
 
       nnquantile_perCoverage<-dt[,list(lower=quantile(relScaledCoverage, 0.05 * unique(coverageWeight), na.rm=T, type=7), upper=quantile(relScaledCoverage, 1 - 0.05 * unique(coverageWeight), na.rm=T, type=7)), by=round(scaledCoverage, digits = -1)+1]
       setkey(nnquantile_perCoverage, round)
