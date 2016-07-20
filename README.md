@@ -16,9 +16,9 @@ sophisticated approach. Thats why we are porting all our workflows to
 ## Installation
 ### Docker image
 The easiest way is to use our [Docker image](https://hub.docker.com/r/kubiac/grosse-ngs-suite/). It comes with all software preinstalled and configured. (currently only develop branch has working Dockerfile, will be updated in next release)
-```docker pull kubiac/grosse-ngs-suite:develop```
+    docker pull kubiac/grosse-ngs-suite:develop
 Then you create a directory, a Snakefile, and a config.json in the described structure (c.f. How it should be used) and start it with
-```docker run -v /path/to/dir:/data/in kubiac/grosse-ngs-suite:develop```
+    docker run -v /path/to/dir:/data/in kubiac/grosse-ngs-suite:develop
 
 ### Manual
 
