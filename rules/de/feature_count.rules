@@ -10,7 +10,7 @@ rule feature_count:
     input: bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}.bam", unit = config["units"].keys()),
            gtf = config["ref_dir"] + "/human/{ref}/genes/all.gtf",
     output: "results/de/featureCounts/{mapper}/{ref}/{kind}/all.counts"
-    threads: 20
+    threads: 4
     shell: 'featureCounts -T {threads} --primary --minOverlap 10 -t "CDS" -g "gene_id" -a {input.gtf} -o {output} {input.bams}'
     
 # # not tested until now
