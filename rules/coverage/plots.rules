@@ -147,13 +147,13 @@ rule plot_CNV_analysis:
       N<-sum(coverage_hist[,sum])
       coverage_hist[, sum := sum/N]
       setkey(coverage_hist, round)
-      dt[,coverageWeight := coverage_hist[round(scaledCoverage, digits = -1)+1,sum]]
+      dt[,coverageWeight := coverage_hist[.(round(scaledCoverage, digits = -1)+1),sum]]
 
-      nnquantile_perCoverage<-dt[,list(lower=quantile(relScaledCoverage, 0.05 * unique(coverageWeight), na.rm=T, type=7), upper=quantile(relScaledCoverage, 1 - 0.05 * unique(coverageWeight), na.rm=T, type=7)), by=round(scaledCoverage, digits = -1)+1]
+      nnquantile_perCoverage<-dt[,list(lower=quantile(relScaledCoverage, 0.005 * unique(coverageWeight), na.rm=T, type=7), upper=quantile(relScaledCoverage, 1 - 0.005 * unique(coverageWeight), na.rm=T, type=7)), by=round(scaledCoverage, digits = -1)+1]
       setkey(nnquantile_perCoverage, round)
 
-      median_scaledCov_perPosition[,lower := nnquantile_perCoverage[round(V1, digits = -1)+1, lower]]
-      median_scaledCov_perPosition[,upper := nnquantile_perCoverage[round(V1, digits = -1)+1, upper]]
+      median_scaledCov_perPosition[,lower := nnquantile_perCoverage[.(round(V1, digits = -1)+1), lower]]
+      median_scaledCov_perPosition[,upper := nnquantile_perCoverage[.(round(V1, digits = -1)+1), upper]]
       setkey(median_scaledCov_perPosition, FeatureRegionName, Position)
       setkey(dt, Sample, FeatureRegionName, Position)
       dt[,lower := median_scaledCov_perPosition[, lower] ]
