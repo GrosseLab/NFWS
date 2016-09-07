@@ -9,13 +9,24 @@ As we experienced the horror of hundreds of
 \*insert-your-favorite-interpreter-language-here\* scripts floating
 around without any documentation, we felt the need of a more
 sophisticated approach. Thats why we are porting all our workflows to 
-[Snakemake](https://bitbucket.org/johanneskoester/snakemake/wiki/Home).
+[Snakemake](https://bitbucket.org/snakemake/snakemake/wiki/Home).
 
 *Note: Every workflow is a work-in-progress an should be handeld as such. This repository does not make using command-line programs easier. You need to understand how the command-line programs and snakemake work.*
 
-## Required Software
+## Installation
+### Docker image
+The easiest way is to use our [Docker image](https://hub.docker.com/r/kubiac/grosse-ngs-suite/). It comes with all software preinstalled and configured. (currently only develop branch has working Dockerfile, will be updated in next release)
 
-This software is required to be installed in a current version and available via the PATH-variable. Scripts for installation that we use ourselfs are [available here](https://github.com/GrosseLab/InstallProcedures).
+    docker pull kubiac/grosse-ngs-suite:develop
+
+Then you create a directory, a Snakefile, and a config.json in the described structure (c.f. How it should be used) and start it with
+
+    docker run -v /path/to/dir:/data/in kubiac/grosse-ngs-suite:develop
+
+### Manual
+
+For manual installation please install this software in a current version and make it available via the PATH-variable. Scripts for installation that we use ourselfs are [available here](https://github.com/GrosseLab/InstallProcedures).
+* python 3
 * [snakemake](https://bitbucket.org/johanneskoester/snakemake/wiki/Documentation#markdown-header-installation)
 * bwa
 * segemehl
@@ -28,9 +39,13 @@ This software is required to be installed in a current version and available via
 * FastQC
 * trimmomatic
 
-## List of workflows
+Then clone this repository somewhere and point in your Snakefiles (examples in Workflows) to the rules that you want to use.
+
+## List of analyses
 
 * GATK SNP-Calling
+* CNV analysis
+* coverage analysis
 * ... other things that you can do by combining all the rules available
 
 ## How it should be used
