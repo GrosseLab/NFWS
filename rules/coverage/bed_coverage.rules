@@ -9,7 +9,7 @@ rule target_coverage:
     """Compute per base coverage of sequenced regions."""
     input:
         ref = "results/annotation/featureCounts/{mapper}/{ref}/{kind}/generated_manifest_{bef}_{aft}.bed",
-        bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord_dedup.bam", unit = config["samples"][wildcards.sample])          
+        bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord.bam", unit = config["samples"][wildcards.sample])          
     output: "results/coverage/{mapper}/{ref}/{kind}/{sample}_{bef}_{aft}.cov"
     # threads: 15
     run:

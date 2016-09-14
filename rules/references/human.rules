@@ -18,48 +18,59 @@ rule genome_hg38_download:
 
 rule genome_hg19_download:
     output: config["ref_dir"] + "/human/hg19/genome/hg19.fa"
-    shell: "wget -q -O - ftp://ftp-trace.ncbi.nih.gov//1000genomes/ftp/technical/reference/human_g1k_v37.fasta.gz | gunzip -cd > {output}"
+    shell: "wget -q -O - ftp://ftp-trace.ncbi.nih.gov//1000genomes/ftp/technical/reference/human_g1k_v37.fasta.gz | pigz -cd > {output}"
 
 rule hg19_ucsc_rm_download:
     output: config["ref_dir"] + "/human/hg19/genome/hg19_ucsc_rm.fa"
-    shell: "wget -q -O - --user=gsapubftp-anonymous ftp://ftp.broadinstitute.org//bundle/2.8/hg19/ucsc.hg19.fasta.gz | gunzip -cd > {output}"
+    shell: "wget -q -O - --user=gsapubftp-anonymous ftp://ftp.broadinstitute.org//bundle/2.8/hg19/ucsc.hg19.fasta.gz | pigz -cd > {output}"
 
 ######### GENE ANNOTATION
 
 rule gene_hg38_download:
     output: config["ref_dir"] + "/human/hg38/genes/all.gtf"
-    shell: "wget -q -O - ftp://ftp.ensembl.org/pub/release-80/gtf/homo_sapiens/Homo_sapiens.GRCh38.80.gtf.gz | gunzip -cd > {output}"
+    shell: "wget -q -O - ftp://ftp.ensembl.org/pub/release-80/gtf/homo_sapiens/Homo_sapiens.GRCh38.80.gtf.gz | pigz -cd > {output}"
 
 rule gene_hg19_download:
     output: config["ref_dir"] + "/human/hg19/genes/all.gtf"
-    shell: "wget -q -O - ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz | gunzip -cd > {output}"
+    shell: "wget -q -O - ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz | pigz -cd > {output}"
 
 ######### VARIANT DATABASES
 
 ## dbSNP hg38
 rule dbsnp_hg38_download:
     output: config["ref_dir"] + "/human/hg38/snp/dbsnp142.vcf"
-    shell: "wget -q -O - ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/All_20150218.vcf.gz | gunzip -cd | sed 's/^\([^#]\)/chr\1/' > {output}"
+    shell: "wget -q -O - ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/All_20150218.vcf.gz | pigz -cd | sed 's/^\([^#]\)/chr\1/' > {output}"
 
 ##dbSNP hg19
 rule dbsnp_hg19_download:
     output: config["ref_dir"] + "/human/hg19/snp/dbsnp142.vcf"
-    shell: "wget -q -O - ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b142_GRCh37p13/VCF/All_20150217.vcf.gz | gunzip -cd | sed 's/^\([^#]\)/chr\1/' > {output}"
+    shell: "wget -q -O - ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b142_GRCh37p13/VCF/All_20150217.vcf.gz | pigz -cd | sed 's/^\([^#]\)/chr\1/' > {output}"
+rule dbsnp138_hg19_download:
+	output: config["ref_dir"] + "/human/hg19/snp/dbsnp_138.hg19.vcf"
+	shell: "wget -q -O - --user gsapubftp-anonymous --password '' ftp://ftp.broadinstitute.org//bundle/2.8/hg19/dbsnp_138.hg19.vcf.gz | pigz -cd > {output}"
+
+# Illumina trusight cancer included rs-SNPs
+rule illumina_cancer_rsSNPs_download:
+	output: config["ref_dir"] + "/human/{ref}/snp/rs_snps_cf-deepseq.txt"
+	shell: "wget -q -O - http://support.illumina.com/content/dam/illumina-support/documents/documentation/chemistry_documentation/trusight/trusight_cancer_manifest_a.txt | awk '{{if($1 ~ /^rs/) split($1,a,\".\"); print a[1]; }}' > {output}"
 
 ## HapMap
 # not included by now because the latest release is based on hg36
 
 ## 1K Genomes
-
+rule G_phase1_hg19_download:
+	output: config["ref_dir"] + "/human/hg19/snp/1000G_phase1.indels.hg19.sites.vcf"
+	shell: "wget -q -O - --user gsapubftp-anonymous --password '' ftp://ftp.broadinstitute.org//bundle/2.8/hg19/1000G_phase1.indels.hg19.sites.vcf.gz | pigz -dc > {output}"
 ## Mills
-
-## Omni
+rule Mills_and_1000G_hg19_download:
+	output: config["ref_dir"] + "/human/hg19/snp/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf"
+	shell: "wget -q -O - --user gsapubftp-anonymous --password '' ftp://ftp.broadinstitute.org//bundle/2.8/hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf.gz | pigz -dc > {output}"
 
 ######### CHAINS
 
 rule download_hg19_to_hg38:
     output: config["ref_dir"] + "/human/hg37/chains/hg19ToHg38.over.chain"
-    shell: "wget -q -O - http://hgdownload.cse.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz | gunzip -cd > {output}"
+    shell: "wget -q -O - http://hgdownload.cse.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz | pigz -cd > {output}"
 
 ######### OTHER DATABASES
 
@@ -69,7 +80,7 @@ MIRBASE_URL = "ftp://mirbase.org/pub/mirbase/CURRENT"
 
 rule download_mirbase_mature:
     output: config["ref_dir"] + "/all/mirbase/mature.fa"
-    shell: "wget -q -O - {MIRBASE_URL}/mature.fa.gz | gunzip > {output}"
+    shell: "wget -q -O - {MIRBASE_URL}/mature.fa.gz | pigz > {output}"
 
 rule generate_mirbase_mature_human:
     input: config["ref_dir"] + "/all/mirbase/mature.fa"
@@ -78,7 +89,7 @@ rule generate_mirbase_mature_human:
 
 rule download_mirbase_hairpin:
     output: config["ref_dir"] + "/all/mirbase/hairpin.fa"
-    shell: "wget -q -O - {MIRBASE_URL}/hairpin.fa.gz | gunzip > {output}"
+    shell: "wget -q -O - {MIRBASE_URL}/hairpin.fa.gz | pigz > {output}"
 
 rule generate_mirbase_hairpin_human:
     input: config["ref_dir"] + "/all/mirbase/hairpin.fa"

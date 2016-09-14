@@ -12,6 +12,7 @@ from math import floor
 # GenomeAnalysisTK.jar is available via gatk
 
 ruleorder: gatk_genotyping_all > gatk_genotyping
+ruleorder: haplotype_caller > gatk_genotyping
 
 rule realign_info:
    """Determines critical regions for realignment."""
