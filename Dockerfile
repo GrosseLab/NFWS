@@ -17,7 +17,7 @@ RUN R -e 'install.packages(c("ggplot2", "data.table"), repos="http://cran.cnr.Be
 
 # pulling further install scripts and running them
 RUN apt-get install make
-RUN git clone https://github.com/GrosseLab/InstallProcedures.git #1
+RUN git clone https://github.com/GrosseLab/InstallProcedures.git
 RUN InstallProcedures/bwa_0.7.15.sh
 RUN InstallProcedures/bedtools_2.22.1.sh
 RUN InstallProcedures/bedtools_2.25.sh
@@ -25,6 +25,7 @@ RUN InstallProcedures/samtools_1.3.1.sh
 RUN InstallProcedures/fastqc_0.11.3.sh
 RUN InstallProcedures/subread_1.5.0-p3.sh
 RUN InstallProcedures/picard_2.5.0.sh
+RUN InstallProcedures/trimmomatic_0.36.sh
 RUN cp InstallProcedures/picard /usr/local/bin/
 RUN mkdir /usr/local/bin/GenomeAnalysisTK-3.6 && mv /usr/gitc/GATK36.jar /usr/local/bin/GenomeAnalysisTK-3.6/GenomeAnalysisTK.jar && cp InstallProcedures/gatk /usr/local/bin/
 
