@@ -8,7 +8,7 @@
 rule trimmomatic_se:
     input: fastqs = lambda wildcards: map( lambda f: "data/reads/raw/" + f, config["units"][wildcards.unit])
     output: "data/reads/filtered/{unit}_P1.fastq.gz",
-    shell: "java -jar /usr/local/bin/Trimmomatic-0.33/trimmomatic-0.33.jar SE -phred33 "
+    shell: "trimmomatic SE -phred33 "
            "{input.fastqs} "
            "{output} "
            "{config[trim_param]}"
