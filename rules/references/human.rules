@@ -12,7 +12,7 @@
 
 rule genome_hg38_download:
     output: config["ref_dir"] + "/human/hg38/genome/hg38.fa"
-    shell: "wget -q -O {output} ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_reference_genome/hs38DH.fa"
+    shell: "wget -q -O - ftp://ftp.ensembl.org//pub/release-86/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz | pigz -cd > {output}"
 
 ## genome hg19
 
@@ -28,7 +28,7 @@ rule hg19_ucsc_rm_download:
 
 rule gene_hg38_download:
     output: config["ref_dir"] + "/human/hg38/genes/all.gtf"
-    shell: "wget -q -O - ftp://ftp.ensembl.org/pub/release-80/gtf/homo_sapiens/Homo_sapiens.GRCh38.80.gtf.gz | pigz -cd > {output}"
+    shell: "wget -q -O - ftp://ftp.ensembl.org//pub/release-86/gtf/homo_sapiens/Homo_sapiens.GRCh38.86.gtf.gz | pigz -cd > {output}"
 
 rule gene_hg19_download:
     output: config["ref_dir"] + "/human/hg19/genes/all.gtf"

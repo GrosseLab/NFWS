@@ -27,8 +27,8 @@ rule generate_manifest:
     output: "results/annotation/featureCounts/{mapper}/{ref}/{kind}/generated_manifest.bed"
     # threads: 15
     shell: """
-	    cat {input.count} | grep -v '^#' | awk '{{t=0; for(i=7;i<=NF;i++){{t+=$i}}; if(t>300) print $1;}}' | grep -f - {input.ensembl} | grep -P 'protein_coding\tCDS' | grep 'tag "CCDS";' | awk '{{gsub(/[;"]/, "");gsub(/-/,"",$16); print "chr" $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16;}}' > {output};
-        grep 'chrM' /data/references/human/hg19/genes/all.gtf | grep -P 'protein_coding\tCDS' | awk '{{gsub(/[;"]/, "");gsub(/-/,"",$16); print $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16;}}' >> {output}
+	    cat {input.count} | grep -v '^#' | awk '{{t=0; for(i=7;i<=NF;i++){{t+=$i}}; if(t>300) print $1;}}' | grep -f - {input.ensembl} | grep -P 'protein_coding' | grep '\tCDS\t' | grep 'tag "CCDS";' | awk '{{gsub(/[;"]/, "");gsub(/-/,"",$16); print "chr" $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16;}}' > {output};
+        grep 'chrM' {input.ensemble} | grep -P 'protein_coding\tCDS' | awk '{{gsub(/[;"]/, "");gsub(/-/,"",$16); print $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16;}}' >> {output}
        	"""
 
 rule target_bad_coverage:
