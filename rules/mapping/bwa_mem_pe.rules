@@ -10,7 +10,7 @@ UNIT_TO_SAMPLE = {
     unit: sample for sample, units in config["samples"].items()
     for unit in units }
 
-BWA_INDEX_SUFFIXES = [ "", ".amb", ".ann", ".bwt", ".pac", ".sa" ]
+BWA_INDEX_SUFFIXES = [ ".amb", ".ann", ".bwt", ".pac", ".sa" ]
 
 rule bwa_index:
     """Creates an index of a fasta file."""
