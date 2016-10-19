@@ -3,7 +3,7 @@
 configfile: "config.json"
 include: "/data/DefaultPipelines/rules/references/human.rules"
 include: "/data/DefaultPipelines/rules/references/illumina.rules"
-include: "/data/DefaultPipelines/rules/trim/trimmomatic_pe.rules"
+include: "/data/DefaultPipelines/rules/trim/trimmomatic.rules"
 include: "/data/DefaultPipelines/rules/mapping/bwa_mem_pe.rules"
 include: "/data/DefaultPipelines/rules/mapping/samfiles.rules"
 include: "/data/DefaultPipelines/rules/mapping/picard.rules"
@@ -17,38 +17,53 @@ rule all:
 	input:
 		# FastQC
 		expand("results/qa/fastqc/raw/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
-		,expand("results/qa/fastqc/filtered/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
+		,expand("results/qa/fastqc/adapter_trimmed/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
+		,expand("results/qa/fastqc/quality_trimmed/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
 		# Coverage plots
-		,"plots/coverage/illumina/hg19/filtered/BRCA1-ENST00000357654.pdf"
+		,"plots/coverage/illumina/hg19/adapter_trimmed/BRCA1-ENST00000357654.pdf"
+		,"plots/coverage/illumina/hg19/quality_trimmed/BRCA1-ENST00000357654.pdf"
 		,"plots/coverage/bwa/hg19/raw/BRCA1-ENST00000357654.pdf"
-		,"plots/coverage/bwa/hg19/filtered/BRCA1-ENST00000357654.pdf"
+		,"plots/coverage/bwa/hg19/adapter_trimmed/BRCA1-ENST00000357654.pdf"
+		,"plots/coverage/bwa/hg19/quality_trimmed/BRCA1-ENST00000357654.pdf"
 		,"plots/coverage/bwa/hg38/raw/BRCA1-ENST00000357654.pdf"
-		,"plots/coverage/bwa/hg38/filtered/BRCA1-ENST00000357654.pdf"
-		,"plots/coverage/illumina/hg19/filtered/Total.pdf"
+		,"plots/coverage/bwa/hg38/adapter_trimmed/BRCA1-ENST00000357654.pdf"
+		,"plots/coverage/bwa/hg38/quality_trimmed/BRCA1-ENST00000357654.pdf"
+		,"plots/coverage/illumina/hg19/adapter_trimmed/Total.pdf"
+		,"plots/coverage/illumina/hg19/quality_trimmed/Total.pdf"
 		,"plots/coverage/bwa/hg19/raw/Total.pdf"
-		,"plots/coverage/bwa/hg19/filtered/Total.pdf"
+		,"plots/coverage/bwa/hg19/adapter_trimmed/Total.pdf"
+		,"plots/coverage/bwa/hg19/quality_trimmed/Total.pdf"
 		,"plots/coverage/bwa/hg38/raw/Total.pdf"
-		,"plots/coverage/bwa/hg38/filtered/Total.pdf"
+		,"plots/coverage/bwa/hg38/adapter_trimmed/Total.pdf"
+		,"plots/coverage/bwa/hg38/quality_trimmed/Total.pdf"
 		# CNV analysis
-		,"plots/CNV/illumina/hg19/filtered/BRCA1-ENST00000357654.pdf"
+		,"plots/CNV/illumina/hg19/adapter_trimmed/BRCA1-ENST00000357654.pdf"
+		,"plots/CNV/illumina/hg19/quality_trimmed/BRCA1-ENST00000357654.pdf"
 		,"plots/CNV/bwa/hg19/raw/BRCA1-ENST00000357654.pdf"
-		,"plots/CNV/bwa/hg19/filtered/BRCA1-ENST00000357654.pdf"
+		,"plots/CNV/bwa/hg19/adapter_trimmed/BRCA1-ENST00000357654.pdf"
+		,"plots/CNV/bwa/hg19/quality_trimmed/BRCA1-ENST00000357654.pdf"
 		,"plots/CNV/bwa/hg38/raw/BRCA1-ENST00000357654.pdf"
-		,"plots/CNV/bwa/hg38/filtered/BRCA1-ENST00000357654.pdf"
+		,"plots/CNV/bwa/hg38/adapter_trimmed/BRCA1-ENST00000357654.pdf"
+		,"plots/CNV/bwa/hg38/quality_trimmed/BRCA1-ENST00000357654.pdf"
 		# low covered regions
-		,expand("results/coverage/illumina/hg19/filtered/{patient}_20_20.lower100", patient = config["samples"].keys() )
+		,expand("results/coverage/illumina/hg19/adapter_trimmed/{patient}_20_20.lower100", patient = config["samples"].keys() )
+		,expand("results/coverage/illumina/hg19/quality_trimmed/{patient}_20_20.lower100", patient = config["samples"].keys() )
 		,expand("results/coverage/bwa/hg19/raw/{patient}_20_20.lower100", patient = config["samples"].keys() )
-		,expand("results/coverage/bwa/hg19/filtered/{patient}_20_20.lower100", patient = config["samples"].keys() )
+		,expand("results/coverage/bwa/hg19/adapter_trimmed/{patient}_20_20.lower100", patient = config["samples"].keys() )
+		,expand("results/coverage/bwa/hg19/quality_trimmed/{patient}_20_20.lower100", patient = config["samples"].keys() )
 		,expand("results/coverage/bwa/hg38/raw/{patient}_20_20.lower100", patient = config["samples"].keys() )
-		,expand("results/coverage/bwa/hg38/filtered/{patient}_20_20.lower100", patient = config["samples"].keys() )
+		,expand("results/coverage/bwa/hg38/adapter_trimmed/{patient}_20_20.lower100", patient = config["samples"].keys() )
+		,expand("results/coverage/bwa/hg38/quality_trimmed/{patient}_20_20.lower100", patient = config["samples"].keys() )
 		# SNPs summary
-		# ,"results/variants/gatk/hg19/filtered/" + config["run"] + "_rs_SNPs.tsv"
+		# ,"results/variants/gatk/hg19/quality_trimmed/" + config["run"] + "_rs_SNPs.tsv"
 		# GATK SNP-calling
 		,expand("results/variants/gatk/hg19/raw/{patient}.vcf", patient = config["samples"].keys() )
 		,"results/variants/gatk/hg19/raw/all.vcf"
-		,expand("results/variants/gatk/hg19/filtered/{patient}.vcf", patient = config["samples"].keys() )
-		,"results/variants/gatk/hg19/filtered/all.vcf"
+		,expand("results/variants/gatk/hg19/adapter_trimmed/{patient}.vcf", patient = config["samples"].keys() )
+		,"results/variants/gatk/hg19/adapter_trimmed/all.vcf"
+		,expand("results/variants/gatk/hg19/quality_trimmed/{patient}.vcf", patient = config["samples"].keys() )
+		,"results/variants/gatk/hg19/quality_trimmed/all.vcf"
 		# ,expand("results/variants/gatk/hg38/raw/{patient}.vcf", patient = config["samples"].keys() )
 		# ,"results/variants/gatk/hg38/raw/all.vcf"
-		# ,expand("results/variants/gatk/hg38/filtered/{patient}.vcf", patient = config["samples"].keys() )
-		# ,"results/variants/gatk/hg38/filtered/all.vcf"
+		# ,expand("results/variants/gatk/hg38/quality_trimmed/{patient}.vcf", patient = config["samples"].keys() )
+		# ,"results/variants/gatk/hg38/quality_trimmed/all.vcf"
