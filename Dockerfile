@@ -10,10 +10,7 @@ RUN apt-get clean
 # install conda, python, snakemake, rpy2 and R
 RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh &&  bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda
 ENV PATH /opt/conda/bin:$PATH
-RUN conda create -n snakemake python=3.4 sqlite && /bin/bash -c "source activate snakemake" && conda install -c johanneskoester -c r snakemake rpy2
-
-# install R-Packages
-RUN R -e 'install.packages(c("ggplot2", "data.table"), repos="http://cran.cnr.Berkeley.edu")'
+RUN conda create -n snakemake python=3.5 sqlite && source activate snakemake && conda install -c r -c bioconda r snakemake rpy2 gffutils r-ggplot2 r-data.table
 
 # pulling further install scripts and running them
 RUN apt-get install make
