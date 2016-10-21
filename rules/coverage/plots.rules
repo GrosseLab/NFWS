@@ -218,7 +218,6 @@ rule plot_CNV_analysis:
       return(NULL)}}, mc.cores = {threads})
     """)
 
-
 rule plot_hist:
     """Produces a summary plot of target coverage."""
     input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_diagnostics_20_20.hist", sample = config["samples"].keys() )

@@ -34,6 +34,13 @@ rule gene_hg19_download:
     output: config["ref_dir"] + "/human/hg19/genes/all.gtf"
     shell: "wget -q -O - ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz | pigz -cd > {output}"
 
+rule genes_gffutils_create_db:
+	input: config["ref_dir"] + "/{organism}/{ref}/genes/{name}.gtf"
+	output: config["ref_dir"] + "/{organism}/{ref}/genes/{name}.db"
+	run:
+		import gffutils
+		gffutils.create_db(input[0], dbfn=output[0], disable_infer_transcripts=True, disable_infer_genes=True, force=True)
+
 ######### VARIANT DATABASES
 
 ## dbSNP hg38

@@ -22,14 +22,33 @@ rule target_coverage:
 rule generate_manifest:
     """Generate a manifest-like bed-file. Contains covered regions"""
     input:
-        ensembl = config["ref_dir"] + "/human/{ref}/genes/all.gtf",
+        ensembl = config["ref_dir"] + "/human/{ref}/genes/all.db",
         count = "results/de/featureCounts/{mapper}/{ref}/{kind}/all.counts"
     output: "results/annotation/featureCounts/{mapper}/{ref}/{kind}/generated_manifest.bed"
     # threads: 15
-    shell: """
-	    cat {input.count} | grep -v '^#' | awk '{{t=0; for(i=7;i<=NF;i++){{t+=$i}}; if(t>300) print $1;}}' | grep -f - {input.ensembl} | grep -P 'protein_coding' | grep '\tCDS\t' | grep 'tag "CCDS";' | awk '{{gsub(/[;"]/, "");gsub(/-/,"",$16); print "chr" $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16;}}' > {output};
-        grep 'chrM' {input.ensemble} | grep -P 'protein_coding\tCDS' | awk '{{gsub(/[;"]/, "");gsub(/-/,"",$16); print $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16;}}' >> {output}
-       	"""
+	run:
+		import gffutils
+		genes = []
+		with open(input.count) as counts_file:
+			for line in counts_file:
+				if not (line[0] == '#' or line[:6] == "Geneid"):
+					split_line = line.rstrip().split("\t")
+					if sum(map(int, split_line[6:])) > 300:
+						genes.append(split_line[0])
+
+		with open(output[0], "w+") as manifest:
+			ensembl_db = gffutils.FeatureDB(input.ensembl)
+			for gene in genes:
+				if "protein_coding" in ensembl_db[gene]["gene_biotype"]:
+					for transcript in ensembl_db.children(gene, featuretype='transcript'):
+						if 'ccds_id' in transcript.attributes:
+							for CDS in ensembl_db.children(transcript, featuretype='CDS'):
+								manifest.write( "chr" + CDS.seqid + "\t" + str(CDS.start) + "\t" + str(CDS.end) + "\t" + CDS["transcript_id"][0] + "-" + CDS["exon_number"][0] + "-" + CDS["gene_name"][0] + "\n" )
+
+    # shell: """
+	   #  cat {input.count} | grep -v '^#' | awk '{{t=0; for(i=7;i<=NF;i++){{t+=$i}}; if(t>300) print $1;}}' | grep -f - {input.ensembl} | grep -P 'protein_coding' | grep '\tCDS\t' | grep 'tag "CCDS";' | awk '{{gsub(/[;"]/, "");gsub(/-/,"",$16); print "chr" $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16;}}' > {output};
+    #     grep 'chrM' {input.ensembl} | grep -P 'protein_coding\tCDS' | awk '{{gsub(/[;"]/, "");gsub(/-/,"",$16); print $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16;}}' >> {output}
+    #    	"""
 
 rule target_bad_coverage:
     """Only output Regions under a given covergae"""
