@@ -11,9 +11,9 @@ RUN apt-get autoremove -qqy python3 r-base r-base-dev
 RUN apt-get clean
 
 # install conda, python, snakemake, rpy2 and R
-RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh &&  bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda
+RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda
 ENV PATH /opt/conda/bin:$PATH
-RUN conda install -c r -c bioconda python=3.5 r snakemake rpy2 gffutils r-ggplot2 r-data.table
+RUN conda install -c r -c bioconda python=3.5 sqlite psutil r snakemake rpy2 gffutils r-ggplot2 r-data.table
 
 # pulling further install scripts and running them
 RUN apt-get install make
