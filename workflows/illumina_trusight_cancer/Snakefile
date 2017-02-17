@@ -18,11 +18,11 @@ rule all:
 	input:
 		"plots/coverage/illumina/hg19/adapter_trimmed/BRCA1-ENST00000357654.pdf"
 		,"plots/CNV/illumina/hg19/adapter_trimmed/BRCA1-ENST00000357654.pdf"
-		,"plots/coverage/illumina/hg19/adapter_trimmed/Total.pdf"
+		,"plots/cum_coverage_goi/illumina/hg19/adapter_trimmed/cumulative_coverage_of_genes_of_interest.pdf"
 		,expand("results/CNV/illumina/hg19/adapter_trimmed/{patient}_CNV.txt", patient = config["samples"].keys() )
 		,expand("results/coverage/illumina/hg19/adapter_trimmed/{patient}_20_20.lower100", patient = config["samples"].keys() )
 		,expand("results/coverage/illumina/hg19/adapter_trimmed/{patient}_20_20.lower60", patient = config["samples"].keys() )
 		,expand("results/coverage/illumina/hg19/adapter_trimmed/{patient}_20_20.lower30", patient = config["samples"].keys() )
 		,expand("results/coverage/illumina/hg19/adapter_trimmed/{patient}_20_20.lower10", patient = config["samples"].keys() )
 		,expand("results/qa/fastqc/adapter_trimmed/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
-		,"results/variants/gatk/hg19/adapter_trimmed/" + config["run"] + "_rs_SNPs.tsv"
+		# ,"results/variants/gatk/hg19/adapter_trimmed/" + config["run"] + "_rs_SNPs.tsv"

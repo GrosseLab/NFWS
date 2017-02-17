@@ -34,6 +34,9 @@ rule table_CNV_analysis:
 			dt <- do.call('rbind', coverages)
 			rm(coverages)
 
+			# no Y-Chromosome since it messes up the analysis
+			dt<-dt[Chromosome != "chrY",]
+
 			dt[,Feature := sub("-.*", "", dt[,FeatureRegionName])]
 
 			mean_Cov_perSample<-dt[,mean(Coverage), by=Sample]

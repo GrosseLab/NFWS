@@ -82,7 +82,7 @@ rule lift_manifest_from_hg19_to_hg38:
     input: bed = config["ref_dir"] + "/illumina/hg19/kits/{manifest}.bed",
            chain = config["ref_dir"] + "/human/hg19/chains/hg19ToHg38.over.chain"
     output: bed = config["ref_dir"] + "/illumina/hg38/kits/{manifest}.bed",
-            unmapped = config["ref_dir"] + "/illumina/hg38/kits/{manifest}.bed"
+            unmapped = config["ref_dir"] + "/illumina/hg38/kits/{manifest}_unmapped.bed"
     shell: """
     /usr/local/bin/liftOver/liftOver {input.bed} {input.chain} stdout {output.unmapped} |
     awk '{{
