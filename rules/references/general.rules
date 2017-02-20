@@ -1,0 +1,19 @@
+rule extract_transcriptome_seq:
+	input:
+		genome = config["ref_dir"] + config["references"]["Crubella_183"],
+		annotation_db = config["ref_dir"] + re.sub('\.(gff3|gtf)$', '.db', config["genome_annotation"])
+	output: config["ref_dir"] + config["genome_annotation"] + ".{id}.fa"
+	run:
+		import gffutils
+		from Bio import SeqIO
+		fasta = SeqIO.to_dict(SeqIO.parse(input.genome, "fasta"))
+		gff = gffutils.FeatureDB(input.annotation_db)
+		output_file = open(output[0], 'w')
+
+		for mrna in gff.features_of_type('mRNA', order_by='start'):
+			output_file.write(">" + mrna['ID'][0] + "\n")
+			for exon in gff.children(mrna, featuretype='exon', order_by='start'):
+				output_file.write(str(fasta[mrna.seqid].seq)[exon.start-1:exon.stop])
+			output_file.write("\n")
+
+		output_file.close()

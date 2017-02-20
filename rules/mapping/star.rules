@@ -1,0 +1,84 @@
+import subprocess
+STAR_INDEX_FILES = [ "SAindex", "SA", "Genome", "sjdbList.out.tab", "sjdbList.fromGTF.out.tab", "sjdbInfo.txt", "transcriptInfo.tab", "geneInfo.tab", "exonInfo.tab", "exonGeTrInfo.tab", "chrStart.txt", "chrNameLength.txt", "chrName.txt", "chrLength.txt", "genomeParameters.txt" ]
+
+rule star_index:
+	input:
+		genome = "{path}/genome/{genome_file}",
+		gtf = "{path}/genes/all.gff3"
+	output: expand("{{path}}/genome/{{genome_file}}_STAR/{suf}", suf = STAR_INDEX_FILES)
+	version: subprocess.check_output("STAR --version", shell=True)
+	threads: 60
+	shell: "STAR --runMode genomeGenerate --genomeDir {wildcards.path}/genome/{wildcards.genome_file}_STAR --genomeFastaFiles {input.genome} --runThreadN {threads}  --limitGenomeGenerateRAM 150000000000 --sjdbOverhang 99 --sjdbGTFfile {input.gtf} --sjdbGTFfeatureExon exon --sjdbGTFtagExonParentTranscript Parent --sjdbGTFtagExonParentGene ID"
+
+rule star_mapping:
+	input:
+		genome = lambda wildcards: expand(config["ref_dir"] + config["references"][wildcards.genome] + "_STAR/{suf}", suf = STAR_INDEX_FILES),
+		gtf = config["ref_dir"] + "/capsella/Crubella_183/genes/all.gff3",
+		fastqs = lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit])
+	output:
+		genome_bam = "results/mapping/star/{genome}/{kind}/{unit}.bam",
+		trans_bam = "results/mapping/star/{genome}/{kind}/{unit}/Aligned.toTranscriptome.out.bam",
+		stat = "results/mapping/star/{genome}/{kind}/{unit}/Log.final.out"
+	version: subprocess.check_output("STAR --version", shell=True)
+	threads: 4
+	run:
+		shell("rm -fr results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}")
+		# shutil.rmtree("/scratch/user/adsvy/_STARtmpSTAR_$genome_S.$sid #results/mapping/star/{genome}/{kind}/{unit}/_STARtmp")
+		
+		shell("mkdir results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}")
+		shell("STAR "
+			"--genomeDir " + config['ref_dir'] + config['references'][wildcards.genome] + "_STAR/ "
+			"--readFilesIn {input.fastqs} "
+			"--readFilesCommand zcat "
+			"--runThreadN {threads} "
+			"--outReadsUnmapped Fastx "
+			"--limitBAMsortRAM 200000000000 "
+			"--limitGenomeGenerateRAM 200000000000  "
+			"--sjdbOverhang 99 "
+			"--sjdbGTFfile {input.gtf} "
+			"--sjdbGTFfeatureExon exon "
+			"--sjdbGTFtagExonParentTranscript Parent "
+			"--sjdbGTFtagExonParentGene ID "
+			"--alignIntronMin 20 "
+			"--alignIntronMax 50000 "
+			"--outFilterMismatchNmax 2 "
+			"--outFilterMultimapNmax 50 "
+			"--outSAMattributes Standard "
+			"--outSAMstrandField intronMotif "
+			"--outFileNamePrefix results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/ "
+			"--outSAMprimaryFlag AllBestScore "
+			"--outSAMtype BAM Unsorted "
+			"--outStd BAM_Unsorted "
+			"--outFilterIntronMotifs RemoveNoncanonicalUnannotated "
+			"--quantMode TranscriptomeSAM GeneCounts > {output.genome_bam}"
+		)
+
+		shell("pigz results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/Unmapped.out.mate*")
+		shell("rm -fr results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/_STARtmp")
+		shell("rm -fr results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/_STARgenome")
+
+rule star_stat:
+	input: lambda wildcards: expand("results/mapping/star/" + wildcards.genome + "/" + wildcards.kind + "/{unit}/Log.final.out", unit = config['units'].keys())
+	output: "results/stat/star/{genome}/{kind}/all.tsv"
+	run:
+		# init results table
+		res_table = dict()
+		# every file becomes a line in the results table
+		for curr_file in input:
+			res_line = dict()
+			with open(curr_file) as stat_file:
+				for line in stat_file:
+					if ("|" in line):
+						split_line = line.strip().split(" |\t")
+						res_line[split_line[0]] = split_line[1]
+				stat_file.close()
+			res_table[curr_file] = res_line
+
+		# write res_table
+		with open(output[0], "w+") as out:
+			my_keys = res_table[list(res_table.keys())[0]].keys()
+			out.write("File\t" + "\t".join(my_keys) + "\n")
+			for line_key in res_table.keys():
+				line = res_table[line_key]
+				out.write(line_key + "\t" + "\t".join([line.get(key) for key in my_keys]) + "\n" )
+			out.close()
