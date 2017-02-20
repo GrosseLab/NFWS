@@ -35,7 +35,7 @@ rule table_CNV_analysis:
 			rm(coverages)
 
 			# no Y-Chromosome since it messes up the analysis
-			dt<-dt[Chromosome != "chrY",]
+			dt<-dt[Chromosome != "chrY" & Chromosome != "chrX",]
 
 			dt[,Feature := sub("-.*", "", dt[,FeatureRegionName])]
 
