@@ -4,7 +4,7 @@ STAR_INDEX_FILES = [ "SAindex", "SA", "Genome", "sjdbList.out.tab", "sjdbList.fr
 rule star_index:
 	input:
 		genome = "{path}/genome/{genome_file}",
-		gtf = "{path}/genes/all.gff3"
+		gtf = config["ref_dir"] +  config["genome_annotation"]
 	output: expand("{{path}}/genome/{{genome_file}}_STAR/{suf}", suf = STAR_INDEX_FILES)
 	version: subprocess.check_output("STAR --version", shell=True)
 	threads: 60
@@ -13,7 +13,7 @@ rule star_index:
 rule star_mapping:
 	input:
 		genome = lambda wildcards: expand(config["ref_dir"] + config["references"][wildcards.genome] + "_STAR/{suf}", suf = STAR_INDEX_FILES),
-		gtf = config["ref_dir"] + "/capsella/Crubella_183/genes/all.gff3",
+		gtf = config["ref_dir"] +  config["genome_annotation"],
 		fastqs = lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit])
 	output:
 		genome_bam = "results/mapping/star/{genome}/{kind}/{unit}.bam",
