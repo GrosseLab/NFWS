@@ -8,7 +8,17 @@ rule star_index:
 	output: expand("{{path}}/genome/{{genome_file}}_STAR/{suf}", suf = STAR_INDEX_FILES)
 	version: subprocess.check_output("STAR --version", shell=True)
 	threads: 60
-	shell: "STAR --runMode genomeGenerate --genomeDir {wildcards.path}/genome/{wildcards.genome_file}_STAR --genomeFastaFiles {input.genome} --runThreadN {threads}  --limitGenomeGenerateRAM 150000000000 --sjdbOverhang 99 --sjdbGTFfile {input.gtf} --sjdbGTFfeatureExon exon --sjdbGTFtagExonParentTranscript Parent --sjdbGTFtagExonParentGene ID"
+	shell: "STAR "
+		"--runMode genomeGenerate "
+		"--genomeDir {wildcards.path}/genome/{wildcards.genome_file}_STAR "
+		"--genomeFastaFiles {input.genome} "
+		"--runThreadN {threads}  "
+		"--limitGenomeGenerateRAM 150000000000 "
+		"--sjdbOverhang 99 "
+		"--sjdbGTFfile {input.gtf} "
+		"--sjdbGTFfeatureExon exon "
+		"--sjdbGTFtagExonParentTranscript Name "
+		"--sjdbGTFtagExonParentGene Parent"
 
 rule star_mapping:
 	input:
@@ -37,8 +47,8 @@ rule star_mapping:
 			"--sjdbOverhang 99 "
 			"--sjdbGTFfile {input.gtf} "
 			"--sjdbGTFfeatureExon exon "
-			"--sjdbGTFtagExonParentTranscript Parent "
-			"--sjdbGTFtagExonParentGene ID "
+			"--sjdbGTFtagExonParentTranscript Name "
+			"--sjdbGTFtagExonParentGene Parent "
 			"--alignIntronMin 20 "
 			"--alignIntronMax 50000 "
 			"--outFilterMismatchNmax 2 "
