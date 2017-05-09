@@ -1,75 +1,63 @@
-import subprocess
 STAR_INDEX_FILES = [ "SAindex", "SA", "Genome", "sjdbList.out.tab", "sjdbList.fromGTF.out.tab", "sjdbInfo.txt", "transcriptInfo.tab", "geneInfo.tab", "exonInfo.tab", "exonGeTrInfo.tab", "chrStart.txt", "chrNameLength.txt", "chrName.txt", "chrLength.txt", "genomeParameters.txt" ]
 
 rule star_index:
 	input:
 		genome = "{path}/genome/{genome_file}",
 		gtf = config["ref_dir"] +  config["genome_annotation"]
-	output: expand("{{path}}/genome/{{genome_file}}_STAR/{suf}", suf = STAR_INDEX_FILES)
+	output: expand("{{path}}/genome/{{genome_file}}_STAR{{parameterSet,.*}}/{suf}", suf = STAR_INDEX_FILES)
 	version: subprocess.check_output("STAR --version", shell=True)
 	threads: 60
-	shell: "STAR "
-		"--runMode genomeGenerate "
-		"--genomeDir {wildcards.path}/genome/{wildcards.genome_file}_STAR "
-		"--genomeFastaFiles {input.genome} "
-		"--runThreadN {threads}  "
-		"--limitGenomeGenerateRAM 150000000000 "
-		"--sjdbOverhang 99 "
-		"--sjdbGTFfile {input.gtf} "
-		"--sjdbGTFfeatureExon exon "
-		"--sjdbGTFtagExonParentTranscript Name "
-		"--sjdbGTFtagExonParentGene Parent"
+	params:
+		"--genomeDir {path}/genome/{genome_file}_STAR{parameterSet}/",
+		"--limitGenomeGenerateRAM 200000000000",
+		"--sjdbOverhang 99",
+		user = lambda wildcards: getParams("star", wildcards.parameterSet)
+	shell: "STAR --runMode genomeGenerate --genomeFastaFiles {input.genome} --sjdbGTFfile {input.gtf} --runThreadN {threads} {params}"
 
 rule star_mapping:
 	input:
-		genome = lambda wildcards: expand(config["ref_dir"] + config["references"][wildcards.genome] + "_STAR/{suf}", suf = STAR_INDEX_FILES),
+		genome = lambda wildcards: expand(config["ref_dir"] + config["references"][wildcards.genome] + "_STAR" + wildcards.parameterSet + "/{suf}", suf = STAR_INDEX_FILES),
 		gtf = config["ref_dir"] +  config["genome_annotation"],
 		fastqs = lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit])
 	output:
-		genome_bam = "results/mapping/star/{genome}/{kind}/{unit}.bam",
-		trans_bam = "results/mapping/star/{genome}/{kind}/{unit}/Aligned.toTranscriptome.out.bam",
-		stat = "results/mapping/star/{genome}/{kind}/{unit}/Log.final.out"
+		genome_bam = "results/mapping/star{parameterSet,.*}/{genome}/{kind}/{unit}.bam",
+		trans_bam = "results/mapping/star{parameterSet,.*}/{genome}/{kind}/{unit}/Aligned.toTranscriptome.out.bam",
+		stat = "results/mapping/star{parameterSet,.*}/{genome}/{kind}/{unit}/Log.final.out"
 	version: subprocess.check_output("STAR --version", shell=True)
 	threads: 4
+	params:
+		lambda wildcards: "--genomeDir " + config['ref_dir'] + config['references'][wildcards.genome] + "_STAR" + wildcards.parameterSet + "/",
+		"--readFilesCommand zcat",
+		"--outReadsUnmapped Fastx",
+		"--limitBAMsortRAM 200000000000",
+		"--limitGenomeGenerateRAM 200000000000",
+		"--sjdbOverhang 99",
+		"--alignIntronMin 20",
+		"--alignIntronMax 50000",
+		"--outFilterMismatchNmax 2",
+		"--outFilterMultimapNmax 50",
+		"--outSAMattributes Standard",
+		"--outSAMstrandField intronMotif",
+		"--outFileNamePrefix results/mapping/star{parameterSet}/{genome}/{kind}/{unit}/",
+		"--outSAMprimaryFlag AllBestScore",
+		"--outSAMtype BAM Unsorted",
+		"--outStd BAM_Unsorted",
+		"--outFilterIntronMotifs RemoveNoncanonicalUnannotated",
+		"--quantMode TranscriptomeSAM GeneCounts",
+		user = lambda wildcards: getParams("star", wildcards.parameterSet)
 	run:
-		shell("rm -fr results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}")
-		# shutil.rmtree("/scratch/user/adsvy/_STARtmpSTAR_$genome_S.$sid #results/mapping/star/{genome}/{kind}/{unit}/_STARtmp")
+		shell("rm -fr results/mapping/star{wildcards.parameterSet}/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}")
 		
-		shell("mkdir results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}")
-		shell("STAR "
-			"--genomeDir " + config['ref_dir'] + config['references'][wildcards.genome] + "_STAR/ "
-			"--readFilesIn {input.fastqs} "
-			"--readFilesCommand zcat "
-			"--runThreadN {threads} "
-			"--outReadsUnmapped Fastx "
-			"--limitBAMsortRAM 200000000000 "
-			"--limitGenomeGenerateRAM 200000000000  "
-			"--sjdbOverhang 99 "
-			"--sjdbGTFfile {input.gtf} "
-			"--sjdbGTFfeatureExon exon "
-			"--sjdbGTFtagExonParentTranscript Name "
-			"--sjdbGTFtagExonParentGene Parent "
-			"--alignIntronMin 20 "
-			"--alignIntronMax 50000 "
-			"--outFilterMismatchNmax 2 "
-			"--outFilterMultimapNmax 50 "
-			"--outSAMattributes Standard "
-			"--outSAMstrandField intronMotif "
-			"--outFileNamePrefix results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/ "
-			"--outSAMprimaryFlag AllBestScore "
-			"--outSAMtype BAM Unsorted "
-			"--outStd BAM_Unsorted "
-			"--outFilterIntronMotifs RemoveNoncanonicalUnannotated "
-			"--quantMode TranscriptomeSAM GeneCounts > {output.genome_bam}"
-		)
+		shell("mkdir results/mapping/star{wildcards.parameterSet}/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}")
+		shell("STAR --readFilesIn {input.fastqs} --sjdbGTFfile {input.gtf} --runThreadN {threads} {params} > {output.genome_bam}")
 
-		shell("pigz results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/Unmapped.out.mate*")
-		shell("rm -fr results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/_STARtmp")
-		shell("rm -fr results/mapping/star/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/_STARgenome")
+		shell("pigz results/mapping/star{wildcards.parameterSet}/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/Unmapped.out.mate*")
+		shell("rm -fr results/mapping/star{wildcards.parameterSet}/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/_STARtmp")
+		shell("rm -fr results/mapping/star{wildcards.parameterSet}/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/_STARgenome")
 
 rule star_stat:
-	input: lambda wildcards: expand("results/mapping/star/" + wildcards.genome + "/" + wildcards.kind + "/{unit}/Log.final.out", unit = config['units'].keys())
-	output: "results/stat/star/{genome}/{kind}/all.tsv"
+	input: lambda wildcards: expand("results/mapping/star" + wildcards.parameterSet +"/" + wildcards.genome + "/" + wildcards.kind + "/{unit}/Log.final.out", unit = config['units'].keys())
+	output: "results/stat/star{parameterSet,.*}/{genome}/{kind}/all.tsv"
 	run:
 		# init results table
 		res_table = dict()

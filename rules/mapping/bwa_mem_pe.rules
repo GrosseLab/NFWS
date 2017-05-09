@@ -24,16 +24,12 @@ rule bwa_mem_map:
         ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.genome],
         bwaindex = lambda wildcards: expand(config["ref_dir"] + config["references"][wildcards.genome] + "{suf}", suf = BWA_INDEX_SUFFIXES),
         fastqs = lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit]),
-
     output:
-        "results/mapping/bwa/{genome}/{kind}/{unit}.bam"
+        "results/mapping/bwa{parameterSet,.*}/{genome}/{kind}/{unit}.bam"
     params:
-        sample = lambda wildcards: UNIT_TO_SAMPLE[wildcards.unit]
+        lambda wildcards: "-R '@RG\\tID:" + wildcards.unit + "\\tSM:" + UNIT_TO_SAMPLE[wildcards.unit] + "\\tPL:" + config["platform"] + "'",
+        user = lambda wildcards: getParams("bwa mem", wildcards.parameterSet)
     log: 
-        "results/mapping/bwa/{genome}/{kind}/log/{unit}_bwa_mem.log"
+        "results/mapping/bwa{parameterSet}/{genome}/{kind}/log/{unit}_bwa_mem.log"
     threads: 15
-    shell: "bwa mem -M " # picard compatibility
-           "-R '@RG\\tID:{wildcards.unit}\\t"
-           "SM:{params.sample}\\tPL:{config[platform]}' "
-           "-t {threads} {input.ref} {input.fastqs} 2> {log} "
-           "| samtools view -Sbh - > {output}"
+    shell: "bwa mem {params} -t {threads} {input.ref} {input.fastqs} 2> {log} | samtools view -Sbh - > {output}"

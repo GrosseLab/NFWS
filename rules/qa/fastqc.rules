@@ -1,4 +1,3 @@
-
 rule fastqc:
     """
     Computes quality reports for read data sets.
@@ -6,6 +5,9 @@ rule fastqc:
     E.g. Reads in data/reads/RAW result in a QA report in results/qa/fastqc/RAW
     """
     input: "data/reads/{kind}/{file}.fastq.gz"
-    output: expand("results/qa/fastqc/{{kind}}/{{file}}_fastqc.{suf}", suf=["html", "zip"])
+    output: expand("results/qa/fastqc{{parameterSet,.*}}/{{kind}}/{{file}}_fastqc.{suf}", suf=["html", "zip"])
     threads: 1
-    shell: "fastqc -t {threads} --outdir results/qa/fastqc/{wildcards.kind} {input}"
+    params:
+    	user = lambda wildcards: getParams("fastqc", wildcards.parameterSet),
+    	outdir = "results/qa/fastqc{parameterSet}/{kind}"
+    shell: "fastqc -t {threads} --outdir {params.outdir} {params.user} {input}"
