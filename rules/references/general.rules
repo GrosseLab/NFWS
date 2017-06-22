@@ -1,3 +1,17 @@
+rule genes_gffutils_create_db_gtf:
+	input: "{ref}.gtf"
+	output: "{ref}.db"
+	run:
+		import gffutils
+		gffutils.create_db(input[0], dbfn=output[0], disable_infer_transcripts=True, disable_infer_genes=True, force=True)
+
+rule genes_gffutils_create_db_gff3:
+    input: "{ref}.gff3"
+    output: "{ref}.db"
+    run:
+        import gffutils
+        gffutils.create_db(input[0], dbfn=output[0], disable_infer_transcripts=True, disable_infer_genes=True, force=True)
+
 rule extract_transcriptome_seq:
 	input:
 		genome = config["ref_dir"] + config["references"][next(iter(config["references"]))],

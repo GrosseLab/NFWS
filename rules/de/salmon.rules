@@ -1,7 +1,7 @@
 rule salmon:
 	input:
 		bams = lambda wildcards: expand("results/mapping/star" + wildcards.parameterSet + "/" + wildcards.genome + "/" + wildcards.kind + "/{unit}/Aligned.toTranscriptome.out_coord.bam", unit = config['samples'][wildcards.sample]),
-		transcriptome = config["ref_dir"] + config["genome_annotation"] + ".gene.fa",
+		transcriptome = config["ref_dir"] + config["salmon_fasta"],
 		gtf = config["ref_dir"] + config["genome_annotation"]
 	output:
 		"results/de/salmon{parameterSet}/{genome}/{kind}/{sample}/quant.sf",
@@ -10,8 +10,11 @@ rule salmon:
 	threads: 15
 	params:
 		"--libType A",
-		"--fldMean 190",
 		"--output  results/de/salmon{parameterSet}/{genome}/{kind}/{sample}",
+		"--gcBias",
+		"--seqBias",
+		"--useErrorModel",
+		"--numBootstraps 1000",
 		user = lambda wildcards: getParams("salmon", wildcards.parameterSet)
 	run:
 		import tempfile

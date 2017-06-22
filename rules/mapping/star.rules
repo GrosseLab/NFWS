@@ -2,15 +2,14 @@ STAR_INDEX_FILES = [ "SAindex", "SA", "Genome", "sjdbList.out.tab", "sjdbList.fr
 
 rule star_index:
 	input:
-		genome = "{path}/genome/{genome_file}",
+		genome = "{genome_file}",
 		gtf = config["ref_dir"] +  config["genome_annotation"]
-	output: expand("{{path}}/genome/{{genome_file}}_STAR{{parameterSet,.*}}/{suf}", suf = STAR_INDEX_FILES)
+	output: expand("{{genome_file}}_STAR{{parameterSet,.*}}/{suf}", suf = STAR_INDEX_FILES)
 	version: subprocess.check_output("STAR --version", shell=True)
 	threads: 60
 	params:
-		"--genomeDir {path}/genome/{genome_file}_STAR{parameterSet}/",
+		"--genomeDir {genome_file}_STAR{parameterSet}/",
 		"--limitGenomeGenerateRAM 200000000000",
-		"--sjdbOverhang 99",
 		user = lambda wildcards: getParams("star", wildcards.parameterSet)
 	shell: "STAR --runMode genomeGenerate --genomeFastaFiles {input.genome} --sjdbGTFfile {input.gtf} --runThreadN {threads} {params}"
 
@@ -31,7 +30,6 @@ rule star_mapping:
 		"--outReadsUnmapped Fastx",
 		"--limitBAMsortRAM 200000000000",
 		"--limitGenomeGenerateRAM 200000000000",
-		"--sjdbOverhang 99",
 		"--alignIntronMin 20",
 		"--alignIntronMax 50000",
 		"--outFilterMismatchNmax 2",
