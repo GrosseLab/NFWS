@@ -5,5 +5,5 @@ def getParams(program, parameterSet):
 	return(" ".join(config["parameters"][program][parameterSet]) if (parameterSet and parameterSet in config.get("parameters", {}).get(program, {}))  else "")
 
 wildcard_constraints:
-  parameterSet=".*",
+  parameterSet="-+.*",
   mapper="[^- ]+"
