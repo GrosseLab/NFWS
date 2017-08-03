@@ -15,5 +15,4 @@ include: "/data/DefaultPipelines/rules/de/feature_count.rules"
 
 rule all:
 	input:
-		expand("results/qa/fastqc/adapter_trimmed/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] ),
-		expand("results/qa/fastqc/quality_trimmed/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
+		expand("results/qa/fastqc/adapter_trimmed/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
