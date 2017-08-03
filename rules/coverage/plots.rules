@@ -4,8 +4,8 @@ ruleorder: plot_hist > plot_regions
 
 rule plot_regions:
     """Produces coverage plots for each gene in the manifest file."""
-    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
-    output: "plots/coverage/{mapper}/{ref}/{kind}/{anyregion}.pdf"
+    input: expand("results/coverage/{{mapper}}{{parameterSet}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
+    output: "plots/coverage/{mapper}{parameterSet}/{ref}/{kind}/{anyregion}.pdf"
     threads: 48
     run: 
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
@@ -92,8 +92,7 @@ rule plot_regions:
               return(p)
         }})
 
-        dir.create('plots/coverage/{mapper}/{ref}/{kind}', recursive=T)
-        pdf(paste0('plots/coverage/{mapper}/{ref}/{kind}/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
+        pdf(paste0('plots/coverage/{mapper}{parameterSet}/{ref}/{kind}/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
           lapply(plots, print)
           lapply(plots, function(p){{
             print(p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
@@ -104,8 +103,8 @@ rule plot_regions:
 
 rule plot_CNV_analysis:
   """Shows normalized relative coverages to suggest CNV"""
-  input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
-  output: "plots/CNV/{mapper}/{ref}/{kind}/{anyregion}.pdf"
+  input: expand("results/coverage/{{mapper}}{{parameterSet}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
+  output: "plots/CNV/{mapper}{parameterSet}/{ref}/{kind}/{anyregion}.pdf"
   threads: 48
   run:
     files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
@@ -225,8 +224,7 @@ rule plot_CNV_analysis:
               return(p)
         }})
 
-        dir.create('plots/CNV/{mapper}/{ref}/{kind}', recursive=T)
-        pdf(paste0('plots/CNV/{mapper}/{ref}/{kind}/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
+        pdf(paste0('plots/CNV/{mapper}{parameterSet}/{ref}/{kind}/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
           lapply(plots, print)
         dev.off()
       return(NULL)}})#, mc.cores = {threads})
@@ -234,8 +232,8 @@ rule plot_CNV_analysis:
 
 rule plot_hist:
     """Produces a summary plot of target coverage."""
-    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_diagnostics_20_20.hist", sample = config["samples"].keys() )
-    output: "plots/cum_coverage_goi/{mapper}/{ref}/{kind}/cumulative_coverage_of_genes_of_interest.pdf"
+    input: expand("results/coverage/{{mapper}}{{parameterSet}}/{{ref}}/{{kind}}/{sample}_diagnostics_20_20.hist", sample = config["samples"].keys() )
+    output: "plots/cum_coverage_goi/{mapper}{parameterSet}/{ref}/{kind}/cumulative_coverage_of_genes_of_interest.pdf"
     run:
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
       mapper = wildcards.mapper,
