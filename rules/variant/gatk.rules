@@ -9,10 +9,11 @@ rule realign_info:
            bai = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.bam.bai",
            # snpdb_1 = config["ref_dir"] + "/human/{reference}/snp/Mills_and_1000G_gold_standard.indels.{reference}.sites.vcf",
            # snpdb_2 = config["ref_dir"] + "/human/{reference}/snp/1000G_phase1.indels.{reference}.sites.vcf",
-           ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
-           idx = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference] + ".fai",
-           seqdic = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference][:-3] + ".dict"
+           genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference]["genome"],
+           idx = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference]["genome"] + ".fai",
+           seqdic = lambda wildcards: config["ref_dir"] + re.sub('\.(fa|fasta)$', '.dict', config["references"][wildcards.reference]["genome"])
     output: temp("results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.realign.intervals.list")
+    version: subprocess.check_output("gatk --version", shell=True)
     threads: 8
     params:
         user = lambda wildcards: getParams("RealignerTargetCreator", wildcards.parameterSet)
@@ -21,7 +22,7 @@ rule realign_info:
            "{params} "
            # "-known {input.snpdb_1} "
            # "-known {input.snpdb_2} "
-           "-R {input.ref} "
+           "-R {input.genome} "
            "-I {input.bam} "
            "-o {output}"
 
@@ -29,17 +30,18 @@ rule realign_reads:
     """Realigns reads on critical regions."""
     input: bam = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.bam",
            bai = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.bam.bai",
-           ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
+           genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference]["genome"],
            # snpdb_1 = config["ref_dir"] + "/human/{reference}/snp/Mills_and_1000G_gold_standard.indels.{reference}.sites.vcf",
            # snpdb_2 = config["ref_dir"] + "/human/{reference}/snp/1000G_phase1.indels.{reference}.sites.vcf",
            interval = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.realign.intervals.list"
     output: "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.realign.bam"
+    version: subprocess.check_output("gatk --version", shell=True)
     params:
         "--disable_bam_indexing",
         user = lambda wildcards: getParams("IndelRealigner", wildcards.parameterSet)
     shell: "gatk -T IndelRealigner "
            "{params} "
-           "-R {input.ref} "
+           "-R {input.genome} "
            "-I {input.bam} "
            # "-known {input.snpdb_1} "
            # "-known {input.snpdb_2} "
@@ -49,26 +51,28 @@ rule realign_reads:
 # Quality score recalibration
 
 rule recalibrate_info:
-    input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
+    input: genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference]["genome"],
            bam = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.bam",
            bai = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.bam.bai"
     output: temp("results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.recalibrate.grp")
+    version: subprocess.check_output("gatk --version", shell=True)
     threads: 8
     params:
         user = lambda wildcards: getParams("BaseRecalibrator", wildcards.parameterSet)
-    shell: "gatk -T BaseRecalibrator {params} -R {input.ref} -nct {threads} -I {input.bam} -o {output}"
+    shell: "gatk -T BaseRecalibrator {params} -R {input.genome} -nct {threads} -I {input.bam} -o {output}"
     
 rule recalibrate_bam:
-    input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference],
+    input: genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference]["genome"],
            bam = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.bam",
            grp = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.recalibrate.grp"
     output: "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.recalibrated.bam"
+    version: subprocess.check_output("gatk --version", shell=True)
     threads: 8
     params:
       user = lambda wildcards: getParams("PrintReads", wildcards.parameterSet)
     shell: "gatk -T PrintReads "
            "{params} "
-           "-R {input.ref} "
+           "-R {input.genome} "
            "-nct {threads} "
            "-I {input.bam} "
            "-BQSR {input.grp} "
@@ -77,10 +81,11 @@ rule recalibrate_bam:
 # Haplotype caller
 
 rule haplotype_caller:
-    input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref],
+    input: genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
            bams = lambda wildcards: expand("results/mapping/bwa" + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord_dedup.realign.recalibrated.bam", unit = config["samples"][wildcards.patient]),
            bais = lambda wildcards: expand("results/mapping/bwa" + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord_dedup.realign.recalibrated.bam.bai", unit = config["samples"][wildcards.patient]),
     output: "results/variants/gatk{parameterSet}/{ref}/{kind}/{patient}.g.vcf"
+    version: subprocess.check_output("gatk --version", shell=True)
     threads: 8
     params:
       "--emitRefConfidence GVCF",
@@ -91,31 +96,33 @@ rule haplotype_caller:
       from math import floor
       bams = " -I ".join(input.bams)
       ntd = str(floor(threads / len(input.bams)))
-      shell("gatk -T HaplotypeCaller {params} -R {input.ref} -I {bams} --num_cpu_threads_per_data_thread {ntd} -o {output}")
+      shell("gatk -T HaplotypeCaller {params} -R {input.genome} -I {bams} --num_cpu_threads_per_data_thread {ntd} -o {output}")
 
 rule gatk_genotyping_all:
-    input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref],
+    input: genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
            gvcfs = lambda wildcards: expand("results/variants/gatk" + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/{patient}.g.vcf", patient=config["samples"].keys())
     output: "results/variants/gatk{parameterSet}/{ref}/{kind}/all.vcf"
+    version: subprocess.check_output("gatk --version", shell=True)
     threads: 15
     run:
       gvcfs = " --variant ".join(input.gvcfs)
       shell("gatk -T GenotypeGVCFs "
             "--variant {gvcfs} "
             "-nt {threads} "
-            "-R {input.ref} "
+            "-R {input.genome} "
             "-o {output}")
 
 rule gatk_genotyping:
-    input: ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref],
-           gvcf = "results/variants/gatk{parameterSet}/{ref}/{kind}/{patient}.g.vcf"
-    output: "results/variants/gatk{parameterSet}/{ref}/{kind}/{patient}.vcf"
+    input: genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
+           gvcf = "results/variants/gatk{parameterSet}/{ref}/{kind}/{sample}.g.vcf"
+    output: "results/variants/gatk{parameterSet}/{ref}/{kind}/{sample,(?!all$).+}.vcf"
+    version: subprocess.check_output("gatk --version", shell=True)
     threads: 15
     run:
       shell("gatk -T GenotypeGVCFs "
             "--variant {input.gvcf} "
             "-nt {threads} "
-            "-R {input.ref} "
+            "-R {input.genome} "
             "-o {output}")
 
 rule collect_genotypes_for_SNPs:

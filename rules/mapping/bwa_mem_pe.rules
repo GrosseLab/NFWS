@@ -21,15 +21,15 @@ rule bwa_index:
 rule bwa_mem_map:
     """Maps reads specified in the config file (of a given kind (e.g. raw or trimmed)) on a reference sequence."""
     input:
-        ref = lambda wildcards: config["ref_dir"] + config["references"][wildcards.genome],
-        bwaindex = lambda wildcards: expand(config["ref_dir"] + config["references"][wildcards.genome] + "{suf}", suf = BWA_INDEX_SUFFIXES),
+        genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
+        bwaindex = lambda wildcards: expand(config["ref_dir"] + config["references"][wildcards.ref]["genome"] + "{suf}", suf = BWA_INDEX_SUFFIXES),
         fastqs = lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit]),
     output:
-        "results/mapping/bwa{parameterSet,.*}/{genome}/{kind}/{unit}.bam"
+        "results/mapping/bwa{parameterSet,.*}/{ref}/{kind}/{unit}.bam"
     params:
         lambda wildcards: "-R '@RG\\tID:" + wildcards.unit + "\\tSM:" + UNIT_TO_SAMPLE[wildcards.unit] + "\\tPL:" + config["platform"] + "'",
         user = lambda wildcards: getParams("bwa mem", wildcards.parameterSet)
     log: 
-        "results/mapping/bwa{parameterSet}/{genome}/{kind}/log/{unit}_bwa_mem.log"
+        "results/mapping/bwa{parameterSet}/{ref}/{kind}/log/{unit}_bwa_mem.log"
     threads: 15
-    shell: "bwa mem {params} -t {threads} {input.ref} {input.fastqs} 2> {log} | samtools view -Sbh - > {output}"
+    shell: "bwa mem {params} -t {threads} {input.genome} {input.fastqs} 2> {log} | samtools view -Sbh - > {output}"

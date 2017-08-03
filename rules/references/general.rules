@@ -1,22 +1,28 @@
+def annotation_to_ref(annotation):
+	print(annotation)
+	for ref in config["references"].keys():
+		if config["references"][ref]["genome_annotation"] == annotation:
+			return(ref)
+
 rule genes_gffutils_create_db_gtf:
-	input: "{ref}.gtf"
-	output: "{ref}.db"
+	input: "{path}.gtf"
+	output: "{path}.db"
 	run:
 		import gffutils
 		gffutils.create_db(input[0], dbfn=output[0], disable_infer_transcripts=True, disable_infer_genes=True, force=True)
 
 rule genes_gffutils_create_db_gff3:
-    input: "{ref}.gff3"
-    output: "{ref}.db"
-    run:
-        import gffutils
-        gffutils.create_db(input[0], dbfn=output[0], disable_infer_transcripts=True, disable_infer_genes=True, force=True)
+	input: "{path}.gff3"
+	output: "{path}.db"
+	run:
+		import gffutils
+		gffutils.create_db(input[0], dbfn=output[0], disable_infer_transcripts=True, disable_infer_genes=True, force=True)
 
 rule extract_transcriptome_seq:
 	input:
-		genome = config["ref_dir"] + config["references"][next(iter(config["references"]))],
-		annotation_db = config["ref_dir"] + re.sub('\.(gff3|gtf)$', '.db', config["genome_annotation"])
-	output: config["ref_dir"] + config["genome_annotation"] + ".{feature}.fa"
+		genome = lambda wildcards: config["ref_dir"] + config["references"][annotation_to_ref(wildcards.annotation)]["genome"],
+		annotation_db = lambda wildcards: config["ref_dir"] + re.sub('\.(gff3|gtf|bed)$', '.db', config["references"][annotation_to_ref(wildcards.annotation)]["genome_annotation"])
+	output: config["ref_dir"] + "{annotation}.{feature}.fa"
 	run:
 		import gffutils
 		from Bio import SeqIO

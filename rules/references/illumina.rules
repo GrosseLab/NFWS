@@ -1,46 +1,46 @@
-ILLUMINA_URL = "http://support.illumina.com/content/dam/illumina-support/documents"
+# ILLUMINA_URL = "http://support.illumina.com/content/dam/illumina-support/documents"
 
-# Adapters
-rule get_truseq_adapters:
-	output: expand(config["ref_dir"] + "/illumina/adapters/{file}", file = ["NexteraPE-PE.fa", "TruSeq2-PE.fa", "TruSeq2-SE.fa", "TruSeq3-PE-2.fa", "TruSeq3-PE.fa", "TruSeq3-SE.fa"])
-	shell: """
-		wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-Src-0.36.zip
-		unzip Trimmomatic-Src-0.36.zip
-		cp trimmomatic-0.36/adapters/* {config[ref_dir]}/illumina/adapters/
-		rm -r trimmomatic-0.36
-		rm Trimmomatic-Src-0.36.zip
-	"""
+# # Adapters
+# rule get_truseq_adapters:
+# 	output: expand(config["ref_dir"] + "/illumina/adapters/{file}", file = ["NexteraPE-PE.fa", "TruSeq2-PE.fa", "TruSeq2-SE.fa", "TruSeq3-PE-2.fa", "TruSeq3-PE.fa", "TruSeq3-SE.fa"])
+# 	shell: """
+# 		wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-Src-0.36.zip
+# 		unzip Trimmomatic-Src-0.36.zip
+# 		cp trimmomatic-0.36/adapters/* {config[ref_dir]}/illumina/adapters/
+# 		rm -r trimmomatic-0.36
+# 		rm Trimmomatic-Src-0.36.zip
+# 	"""
 
-## KITS
+# ## KITS
 
-# trusight one kit
+# # trusight one kit
 
-rule trusight_one_hg19_manifest:
-    """Downloads trusight one kit manifest, clean up and extend target regions."""
-    output: config["ref_dir"] + "/illumina/hg19/kits/trusightone.bed"
-    shell: """
-    wget -q -O - {ILLUMINA_URL}/downloads/productfiles/trusight/trusight-one-bed-may-2014.zip | gunzip -cd |
-    sed 's/\.chr[1-9,X,Y]\+//' |
-    sed 's/\./-/g' > {output}
-    """
+# rule trusight_one_hg19_manifest:
+#     """Downloads trusight one kit manifest, clean up and extend target regions."""
+#     output: config["ref_dir"] + "/illumina/hg19/kits/trusightone.bed"
+#     shell: """
+#     wget -q -O - {ILLUMINA_URL}/downloads/productfiles/trusight/trusight-one-bed-may-2014.zip | gunzip -cd |
+#     sed 's/\.chr[1-9,X,Y]\+//' |
+#     sed 's/\./-/g' > {output}
+#     """
 
-# trusight cancer kit
+# # trusight cancer kit
 
-rule trusight_cancer_hg19_manifest:
-    """Downloads trusight cancer kit manifest, clean up and extend target regions."""
-    output: config["ref_dir"] + "/illumina/hg19/kits/trusightcancer.bed"
-    shell: """
-    wget -q -O - {ILLUMINA_URL}/documentation/chemistry_documentation/trusight/trusight_cancer_manifest_a.bed | 
-    sed 's/\.chr[1-9,X,Y]\+//' {input} |
-    sed 's/\./-/g' > {output}
-    """
+# rule trusight_cancer_hg19_manifest:
+#     """Downloads trusight cancer kit manifest, clean up and extend target regions."""
+#     output: config["ref_dir"] + "/illumina/hg19/kits/trusightcancer.bed"
+#     shell: """
+#     wget -q -O - {ILLUMINA_URL}/documentation/chemistry_documentation/trusight/trusight_cancer_manifest_a.bed | 
+#     sed 's/\.chr[1-9,X,Y]\+//' {input} |
+#     sed 's/\./-/g' > {output}
+#     """
 
-## UTILITIES
+# ## UTILITIES
 
 rule adjust_manifest:
     """Extends the targeted regions in a manifest file. also: sort a manifest file by Chromosome (chr1, chr2, ... chr10, ...) and by start"""
     input: "{manifest}.bed"
-    output: "{manifest}_{left}_{right}.bed"
+    output: "{manifest}_{left,\d+?}_{right,\d+?}.bed"
     shell: """
            awk '{{
            gsub(/\r/, "")
@@ -49,45 +49,45 @@ rule adjust_manifest:
            print $1 "\t" newleft "\t" newright "\t" $4}}' {input} | sort -k1,2V > {output}
            """
 
-rule add_ensemble_transcripts_to_manifest:
-    """Extend the manifest with selected transcripts from ensemble"""
-    input:
-      manifest = config["ref_dir"] + "/illumina/{ref}/kits/{manifest}.bed",
-      # transcript_list = config["ref_dir"] + "/illumina/{ref}/kits/{manifest}_ENST.txt",
-      ensemble_gtf = config["ref_dir"] + "/human/{ref}/genes/all.gtf"
-    output: config["ref_dir"] + "/illumina/{ref}/kits/{manifest}_ensemble.bed"
-    shell: """
-        # cat {input.manifest} > {output}
-        cut -f 4 {input.manifest} | cut -d "-" -f 1 | uniq | awk '{{print "gene_name \\"" $1 "\\";"}}' | grep -f - {input.ensemble_gtf} | grep -P "protein_coding\tCDS" | grep 'tag "CCDS";' | awk '{{
-        gsub(/[;"]/, "")
-        print "chr" $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16
-        }}' >> {output}
-        """
-
-# rule find_ensemble_transcripts:
-#     """Extract als ensemble transcript-IDs for genes in a manifest"""
+# rule add_ensemble_transcripts_to_manifest:
+#     """Extend the manifest with selected transcripts from ensemble"""
 #     input:
-#         manifest = config["ref_dir"] + "/illumina/{ref}/kits/{manifest}.bed",
-#         ensemble_gtf = config["ref_dir"] + "/human/{ref}/genes/all.gtf"
-#     output: config["ref_dir"] + "/illumina/{ref}/kits/{manifest}_ENST.txt"
+#       manifest = config["ref_dir"] + "/illumina/{ref}/kits/{manifest}.bed",
+#       # transcript_list = config["ref_dir"] + "/illumina/{ref}/kits/{manifest}_ENST.txt",
+#       ensemble_gtf = config["ref_dir"] + "/human/{ref}/genes/all.gtf"
+#     output: config["ref_dir"] + "/illumina/{ref}/kits/{manifest}_ensemble.bed"
 #     shell: """
-#         cut -f 4 {input.manifest} | cut -d "-" -f 1 | grep -f - {input.ensemble_gtf} | grep -P "protein_coding\texon" | awk'{{
+#         # cat {input.manifest} > {output}
+#         cut -f 4 {input.manifest} | cut -d "-" -f 1 | uniq | awk '{{print "gene_name \\"" $1 "\\";"}}' | grep -f - {input.ensemble_gtf} | grep -P "protein_coding\tCDS" | grep 'tag "CCDS";' | awk '{{
 #         gsub(/[;"]/, "")
-#         print $12
-#         }}' | uniq > {output}
+#         print "chr" $1 "\t" $4 "\t" $5 "\t" $12 "-" $14 "-" $16
+#         }}' >> {output}
 #         """
 
-rule lift_manifest_from_hg19_to_hg38:
-    """Lifts manifests for hg19 to hg38."""
-    input: bed = config["ref_dir"] + "/illumina/hg19/kits/{manifest}.bed",
-           chain = config["ref_dir"] + "/human/hg19/chains/hg19ToHg38.over.chain"
-    output: bed = config["ref_dir"] + "/illumina/hg38/kits/{manifest}.bed",
-            unmapped = config["ref_dir"] + "/illumina/hg38/kits/{manifest}_unmapped.bed"
-    shell: """
-    /usr/local/bin/liftOver/liftOver {input.bed} {input.chain} stdout {output.unmapped} |
-    awk '{{
-    split( $4, splitFeature, "-" )
-    print $1 "\t" $2 "\t" $3 "\t" splitFeature[1] "-" $2 "-" $3}}' > {output.bed}
-    """
+# # rule find_ensemble_transcripts:
+# #     """Extract als ensemble transcript-IDs for genes in a manifest"""
+# #     input:
+# #         manifest = config["ref_dir"] + "/illumina/{ref}/kits/{manifest}.bed",
+# #         ensemble_gtf = config["ref_dir"] + "/human/{ref}/genes/all.gtf"
+# #     output: config["ref_dir"] + "/illumina/{ref}/kits/{manifest}_ENST.txt"
+# #     shell: """
+# #         cut -f 4 {input.manifest} | cut -d "-" -f 1 | grep -f - {input.ensemble_gtf} | grep -P "protein_coding\texon" | awk'{{
+# #         gsub(/[;"]/, "")
+# #         print $12
+# #         }}' | uniq > {output}
+# #         """
+
+# rule lift_manifest_from_hg19_to_hg38:
+#     """Lifts manifests for hg19 to hg38."""
+#     input: bed = config["ref_dir"] + "/illumina/hg19/kits/{manifest}.bed",
+#            chain = config["ref_dir"] + "/human/hg19/chains/hg19ToHg38.over.chain"
+#     output: bed = config["ref_dir"] + "/illumina/hg38/kits/{manifest}.bed",
+#             unmapped = config["ref_dir"] + "/illumina/hg38/kits/{manifest}_unmapped.bed"
+#     shell: """
+#     /usr/local/bin/liftOver/liftOver {input.bed} {input.chain} stdout {output.unmapped} |
+#     awk '{{
+#     split( $4, splitFeature, "-" )
+#     print $1 "\t" $2 "\t" $3 "\t" splitFeature[1] "-" $2 "-" $3}}' > {output.bed}
+#     """
     
 
