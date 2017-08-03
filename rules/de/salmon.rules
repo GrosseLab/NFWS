@@ -1,13 +1,21 @@
 rule salmon:
 	input:
-		bams = lambda wildcards: expand("results/mapping/star/" + wildcards.genome + "/" + wildcards.kind + "/{unit}/Aligned.toTranscriptome.out_coord.bam", unit = config['samples'][wildcards.sample]),
-		transcriptome = config["ref_dir"] + config["genome_annotation"] + ".mRNA.fa",
+		bams = lambda wildcards: expand("results/mapping/star" + wildcards.parameterSet + "/" + wildcards.genome + "/" + wildcards.kind + "/{unit}/Aligned.toTranscriptome.out_coord.bam", unit = config['samples'][wildcards.sample]),
+		transcriptome = config["ref_dir"] + config["salmon_fasta"],
 		gtf = config["ref_dir"] + config["genome_annotation"]
 	output:
-		"results/de/salmon/{genome}/{kind}/{sample}/quant.sf",
-		"results/de/salmon/{genome}/{kind}/{sample}/quant.genes.sf"
+		"results/de/salmon{parameterSet}/{genome}/{kind}/{sample}/quant.sf",
+		"results/de/salmon{parameterSet}/{genome}/{kind}/{sample}/quant.genes.sf"
 	version: subprocess.check_output("salmon --version", shell=True)
 	threads: 15
+	params:
+		"--libType A",
+		"--output  results/de/salmon{parameterSet}/{genome}/{kind}/{sample}",
+		"--gcBias",
+		"--seqBias",
+		"--useErrorModel",
+		"--numBootstraps 1000",
+		user = lambda wildcards: getParams("salmon", wildcards.parameterSet)
 	run:
 		import tempfile
 		if len(input.bams) == 1:
@@ -16,15 +24,7 @@ rule salmon:
 			bam_file = tempfile.mkstemp(prefix="./", suffix=".bam")[1]
 			shell("samtools merge -f {bam_file} {input.bams}")
 
-		shell("salmon quant "
-		"--threads {threads} "
-		"--targets {input.transcriptome} "
-		"--alignments {bam_file} "
-		"--libType A "
-		"--geneMap {input.gtf} "
-		"--fldMean 190 "
-		"--output results/de/salmon/{wildcards.genome}/{wildcards.kind}/{wildcards.sample}")
+		shell("salmon quant --threads {threads} --targets {input.transcriptome} --alignments {bam_file} --geneMap {input.gtf} {params}")
 
 		if len(input.bams) > 1:
 			os.remove(bam_file)
-

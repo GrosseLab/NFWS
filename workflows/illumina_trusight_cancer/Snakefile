@@ -1,11 +1,12 @@
 # Snakefile for Illumina Trusight Cancer workflow
 
 configfile: "config.json"
+include: "/data/DefaultPipelines/rules/general/functions.rules"
+include: "/data/DefaultPipelines/rules/general/samtools.rules"
 include: "/data/DefaultPipelines/rules/references/human.rules"
 include: "/data/DefaultPipelines/rules/references/illumina.rules"
 include: "/data/DefaultPipelines/rules/trim/trimmomatic.rules"
 include: "/data/DefaultPipelines/rules/mapping/bwa_mem_pe.rules"
-include: "/data/DefaultPipelines/rules/mapping/samfiles.rules"
 include: "/data/DefaultPipelines/rules/mapping/picard.rules"
 include: "/data/DefaultPipelines/rules/coverage/bed_coverage.rules"
 include: "/data/DefaultPipelines/rules/coverage/plots.rules"

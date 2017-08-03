@@ -1,8 +1,22 @@
+rule genes_gffutils_create_db_gtf:
+	input: "{ref}.gtf"
+	output: "{ref}.db"
+	run:
+		import gffutils
+		gffutils.create_db(input[0], dbfn=output[0], disable_infer_transcripts=True, disable_infer_genes=True, force=True)
+
+rule genes_gffutils_create_db_gff3:
+    input: "{ref}.gff3"
+    output: "{ref}.db"
+    run:
+        import gffutils
+        gffutils.create_db(input[0], dbfn=output[0], disable_infer_transcripts=True, disable_infer_genes=True, force=True)
+
 rule extract_transcriptome_seq:
 	input:
-		genome = config["ref_dir"] + config["references"]["Crubella_183"],
+		genome = config["ref_dir"] + config["references"][next(iter(config["references"]))],
 		annotation_db = config["ref_dir"] + re.sub('\.(gff3|gtf)$', '.db', config["genome_annotation"])
-	output: config["ref_dir"] + config["genome_annotation"] + ".{id}.fa"
+	output: config["ref_dir"] + config["genome_annotation"] + ".{feature}.fa"
 	run:
 		import gffutils
 		from Bio import SeqIO
@@ -10,10 +24,10 @@ rule extract_transcriptome_seq:
 		gff = gffutils.FeatureDB(input.annotation_db)
 		output_file = open(output[0], 'w')
 
-		for mrna in gff.features_of_type('mRNA', order_by='start'):
-			output_file.write(">" + mrna['ID'][0] + "\n")
-			for exon in gff.children(mrna, featuretype='exon', order_by='start'):
-				output_file.write(str(fasta[mrna.seqid].seq)[exon.start-1:exon.stop])
+		for feature in gff.features_of_type(wildcards.feature, order_by="start"):
+			output_file.write(">" + feature['ID'][0] + "\n")
+			for exon in gff.children(feature, featuretype='exon', order_by='start'):
+				output_file.write(str(fasta[feature.seqid].seq)[exon.start-1:exon.stop])
 			output_file.write("\n")
 
 		output_file.close()

@@ -1,0 +1,9 @@
+import subprocess
+
+def getParams(program, parameterSet):
+	parameterSet = parameterSet.lstrip(' -')
+	return(" ".join(config["parameters"][program][parameterSet]) if (parameterSet and parameterSet in config.get("parameters", {}).get(program, {}))  else "")
+
+wildcard_constraints:
+  parameterSet="-+.*",
+  mapper="[^- ]+"
