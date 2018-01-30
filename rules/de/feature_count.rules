@@ -1,8 +1,8 @@
-rule feature_count:
+rule feature_counts:
     """Assigns counts to annotated features using name sorted BAMs."""
     input: bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}.bam", unit = config["units"].keys()),
            gtf = config["ref_dir"] + "/human/{ref}/genes/all.gtf",
-    output: "results/de/featureCounts{parameterSet,.*}/{mapper}/{ref}/{kind}/all.counts"
+    output: "results/de/featureCounts{parameterSet}/{mapper}/{ref}/{kind}/all.counts"
     threads: 4
     params:
     	user = lambda wildcards: getParams("featureCounts", wildcards.parameterSet)

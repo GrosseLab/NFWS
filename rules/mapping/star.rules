@@ -1,31 +1,36 @@
 STAR_INDEX_FILES = [ "SAindex", "SA", "Genome", "sjdbList.out.tab", "sjdbList.fromGTF.out.tab", "sjdbInfo.txt", "transcriptInfo.tab", "geneInfo.tab", "exonInfo.tab", "exonGeTrInfo.tab", "chrStart.txt", "chrNameLength.txt", "chrName.txt", "chrLength.txt", "genomeParameters.txt" ]
 
+# def get_annotation_to_genome( genome ):
+# 	for ref in config["references"].keys():
+# 		if config["references"][ref]["genome"] == genome:
+# 			return config["references"][ref]["transcriptome"]
+
 rule star_index:
 	input:
 		genome = "{genome_file}",
-		gtf = config["ref_dir"] +  config["genome_annotation"]
-	output: expand("{{genome_file}}_STAR{{parameterSet,.*}}/{suf}", suf = STAR_INDEX_FILES)
+		gtf = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome_annotation"]
+	output: expand("{{genome_file}}_STAR{{parameterSet}}/{{ref}}/{file}", file = STAR_INDEX_FILES)
 	version: subprocess.check_output("STAR --version", shell=True)
 	threads: 60
 	params:
-		"--genomeDir {genome_file}_STAR{parameterSet}/",
+		"--genomeDir {genome_file}_STAR{parameterSet}/{ref}/",
 		"--limitGenomeGenerateRAM 200000000000",
 		user = lambda wildcards: getParams("star", wildcards.parameterSet)
 	shell: "STAR --runMode genomeGenerate --genomeFastaFiles {input.genome} --sjdbGTFfile {input.gtf} --runThreadN {threads} {params}"
 
 rule star_mapping:
 	input:
-		genome = lambda wildcards: expand(config["ref_dir"] + config["references"][wildcards.genome] + "_STAR" + wildcards.parameterSet + "/{suf}", suf = STAR_INDEX_FILES),
-		gtf = config["ref_dir"] +  config["genome_annotation"],
+		genome = lambda wildcards: expand(config["ref_dir"] + config["references"][wildcards.ref]["genome"] + "_STAR" + wildcards.parameterSet + "/" + wildcards.ref + "/{suf}", suf = STAR_INDEX_FILES),
+		gtf = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome_annotation"],
 		fastqs = lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit])
 	output:
-		genome_bam = "results/mapping/star{parameterSet,.*}/{genome}/{kind}/{unit}.bam",
-		trans_bam = "results/mapping/star{parameterSet,.*}/{genome}/{kind}/{unit}/Aligned.toTranscriptome.out.bam",
-		stat = "results/mapping/star{parameterSet,.*}/{genome}/{kind}/{unit}/Log.final.out"
+		genome_bam = "results/mapping/star{parameterSet}/{ref}/{kind}/{unit}.bam",
+		trans_bam = "results/mapping/star{parameterSet}/{ref}/{kind}/{unit}/Aligned.toTranscriptome.out.bam",
+		stat = "results/mapping/star{parameterSet}/{ref}/{kind}/{unit}/Log.final.out"
 	version: subprocess.check_output("STAR --version", shell=True)
 	threads: 4
 	params:
-		lambda wildcards: "--genomeDir " + config['ref_dir'] + config['references'][wildcards.genome] + "_STAR" + wildcards.parameterSet + "/",
+		lambda wildcards: "--genomeDir " + config['ref_dir'] + config['references'][wildcards.ref]["genome"] + "_STAR" + wildcards.parameterSet + "/",
 		"--readFilesCommand zcat",
 		"--outReadsUnmapped Fastx",
 		"--limitBAMsortRAM 200000000000",
@@ -36,7 +41,7 @@ rule star_mapping:
 		"--outFilterMultimapNmax 50",
 		"--outSAMattributes Standard",
 		"--outSAMstrandField intronMotif",
-		"--outFileNamePrefix results/mapping/star{parameterSet}/{genome}/{kind}/{unit}/",
+		"--outFileNamePrefix results/mapping/star{parameterSet}/{ref}/{kind}/{unit}/",
 		"--outSAMprimaryFlag AllBestScore",
 		"--outSAMtype BAM Unsorted",
 		"--outStd BAM_Unsorted",
@@ -54,8 +59,8 @@ rule star_mapping:
 		shell("rm -fr results/mapping/star{wildcards.parameterSet}/{wildcards.genome}/{wildcards.kind}/{wildcards.unit}/_STARgenome")
 
 rule star_stat:
-	input: lambda wildcards: expand("results/mapping/star" + wildcards.parameterSet +"/" + wildcards.genome + "/" + wildcards.kind + "/{unit}/Log.final.out", unit = config['units'].keys())
-	output: "results/stat/star{parameterSet,.*}/{genome}/{kind}/all.tsv"
+	input: lambda wildcards: expand("results/mapping/star" + wildcards.parameterSet +"/" + wildcards.ref + "/" + wildcards.kind + "/{unit}/Log.final.out", unit = config['units'].keys())
+	output: "results/stat/star{parameterSet}/{ref}/{kind}/all.tsv"
 	run:
 		# init results table
 		res_table = dict()

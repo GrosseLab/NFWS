@@ -1,16 +1,16 @@
 rule salmon:
 	input:
-		bams = lambda wildcards: expand("results/mapping/star" + wildcards.parameterSet + "/" + wildcards.genome + "/" + wildcards.kind + "/{unit}/Aligned.toTranscriptome.out_coord.bam", unit = config['samples'][wildcards.sample]),
-		transcriptome = config["ref_dir"] + config["salmon_fasta"],
-		gtf = config["ref_dir"] + config["genome_annotation"]
+		bams = lambda wildcards: expand("results/mapping/star" + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}/Aligned.toTranscriptome.out_coord.bam", unit = config['samples'][wildcards.sample]),
+		transcriptome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["transcriptome"],
+		gtf = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome_annotation"]
 	output:
-		"results/de/salmon{parameterSet}/{genome}/{kind}/{sample}/quant.sf",
-		"results/de/salmon{parameterSet}/{genome}/{kind}/{sample}/quant.genes.sf"
+		"results/de/salmon{parameterSet}/{ref}/{kind}/{sample}/quant.sf",
+		"results/de/salmon{parameterSet}/{ref}/{kind}/{sample}/quant.genes.sf"
 	version: subprocess.check_output("salmon --version", shell=True)
 	threads: 15
 	params:
 		"--libType A",
-		"--output  results/de/salmon{parameterSet}/{genome}/{kind}/{sample}",
+		"--output  results/de/salmon{parameterSet}/{ref}/{kind}/{sample}",
 		"--gcBias",
 		"--seqBias",
 		"--useErrorModel",
