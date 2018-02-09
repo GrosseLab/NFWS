@@ -12,6 +12,7 @@ rule table_CNV_analysis:
 		mapper = wildcards.mapper,
 		ref = wildcards.ref,
 		kind = wildcards.kind,
+		parameterSet = wildcards.parameterSet,
 		# platform = config["platform"],
 		# manifest = config["manifest"],
 		left = "20",
