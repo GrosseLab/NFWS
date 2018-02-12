@@ -115,8 +115,9 @@ with open(args.o, "w") as config:
 	'	},\n\n'
 
 	'	"parameters": {\n'
-	'		"program": {\n'
-	'			"parameterSet": ["--arg", "value"]\n'
+	'		"parameterSet": {\n'
+	'			"program1": ["--arg", "value"]\n',
+	'			"program2": ["--arg", "value"]\n'
 	'		}\n'
 	'	}\n'
 	'}')
