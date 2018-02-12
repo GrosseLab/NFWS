@@ -6,6 +6,6 @@ rule trimmomatic_se_quality_trimming:
 rule trimmomatic_se_adapter_trimming:
 	input:
 		fastq = "data/reads/raw/{unit}.fastq.gz",
-		adapters = config["ref_dir"] + "/illumina/adapters/TruSeq3-SE.fa"
+		adapters = config["adapter_sequences"]
 	output: "data/reads/adapter_trimmed/{unit}.fastq.gz",
 	shell: "trimmomatic SE -phred33 {input.fastq} {output} ILLUMINACLIP:{input.adapters}:2:30:10"

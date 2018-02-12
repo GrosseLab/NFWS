@@ -9,7 +9,7 @@ rule trimmomatic_pe_quality_trimming:
 rule trimmomatic_pe_adapter_trimming:
 	input:
 		fastqs = expand("data/reads/raw//{{pre}}{read}{{suf}}.fastq.gz", read=["R1", "R2"]),
-		adapters = config["ref_dir"] + "/illumina/adapters/TruSeq3-PE.fa"
+		adapters = config["adapter_sequences"]
 	output:
 		expand("data/reads/adapter_trimmed/{{pre}}{read}{{suf,.*}}.fastq.gz", read=["R1", "R2"]),
 		expand("data/reads/adapter_trimmed/{{pre}}{read}{{suf,.*}}_unpaired.fastq.gz", read=["R1", "R2"])
