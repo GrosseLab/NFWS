@@ -5,29 +5,52 @@
 #                                                                           #
 #############################################################################
 
+# rule bam_sort_coord:
+#     """Sort alignments by genomic position."""
+#     input: "{prefix}.bam"
+#     output: "{prefix}_coord.bam"
+#     threads: 8
+#     params:
+#         "-T {prefix}"
+#     shell: "samtools sort {params} -@ {threads} -m 12G -o {output} {input}"
+
+# rule bam_sort_name:
+#     """Sort alignments by read name."""
+#     input: "{prefix}.bam"
+#     output: "{prefix}_name.bam"
+#     threads: 8
+#     params:
+#         "-T {prefix}"
+#     shell: "samtools sort {params} -n -@ {threads} -m 12G -o {output} {input}"
+
 rule bam_sort_coord:
     """Sort alignments by genomic position."""
     input: "{prefix}.bam"
-    output: "{prefix}_coord.bam"
+    output:
+        bam = "{prefix}_coord.bam",
+        bai = "{prefix}_coord.bam.bai"
     threads: 8
-    params:
-        "-T {prefix}"
-    shell: "samtools sort {params} -@ {threads} -m 2G -o {output} {input}"
+    # params:
+    #     "-T {prefix}"
+    shell: "sambamba sort -t {threads} -m 2G -o {output.bam} {input}"
 
 rule bam_sort_name:
     """Sort alignments by read name."""
     input: "{prefix}.bam"
-    output: "{prefix}_name.bam"
+    output:
+        bam = "{prefix}_name.bam",
+        bai = "{prefix}_name.bam.bai"
     threads: 8
-    params:
-        "-T {prefix}"
-    shell: "samtools sort {params} -n -@ {threads} -m 2G -o {output} {input}"
+    # params:
+    #     "-T {prefix}"
+    shell: "sambamba sort -n -t {threads} -m 2G -o {output.bam} {input}"
 
 rule bam_index:
     """Creates BAM index."""
     input: "{prefix}.bam"
     output: "{prefix}.bam.bai"
-    shell: "samtools index {input}"
+    threads: 8
+    shell: "sambamba index -t {threads} {input}"
 
 rule fasta_index:
     """Creates Fasta index."""
