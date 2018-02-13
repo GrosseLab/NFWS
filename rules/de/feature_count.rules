@@ -1,7 +1,7 @@
 rule feature_counts:
     """Assigns counts to annotated features using name sorted BAMs."""
     input: bams = lambda wildcards: expand("results/mapping/" + wildcards.mapper + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}.bam", unit = config["units"].keys()),
-           gtf = config["ref_dir"] + "/human/{ref}/genes/all.gtf",
+           gtf = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome_annotation"],
     output: "results/de/featureCounts{parameterSet}/{mapper}/{ref}/{kind}/all.counts"
     threads: 4
     params:
