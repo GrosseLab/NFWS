@@ -34,7 +34,7 @@ rule realign_reads:
            # snpdb_1 = config["ref_dir"] + "/human/{reference}/snp/Mills_and_1000G_gold_standard.indels.{reference}.sites.vcf",
            # snpdb_2 = config["ref_dir"] + "/human/{reference}/snp/1000G_phase1.indels.{reference}.sites.vcf",
            interval = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.realign.intervals.list"
-    output: "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.realign.bam"
+    output: temp("results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.realign.bam")
     version: subprocess.check_output("gatk --version", shell=True)
     params:
         "--disable_bam_indexing",
@@ -65,7 +65,7 @@ rule recalibrate_bam:
     input: genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference]["genome"],
            bam = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.bam",
            grp = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.recalibrate.grp"
-    output: "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.recalibrated.bam"
+    output: temp("results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.recalibrated.bam")
     version: subprocess.check_output("gatk --version", shell=True)
     threads: 8
     params:

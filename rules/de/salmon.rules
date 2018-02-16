@@ -28,3 +28,38 @@ rule salmon:
 
 		if len(input.bams) > 1:
 			os.remove(bam_file)
+
+rule salmon_tables:
+	input: expand("results/de/salmon{{parameterSet}}/{{ref}}/{{kind}}/{sample}/quant.sf", sample = config["samples"].keys())
+	output:
+		"results/de/salmon{parameterSet}/{ref}/{kind}/Length.tsv",
+		"results/de/salmon{parameterSet}/{ref}/{kind}/EffectiveLength.tsv",
+		"results/de/salmon{parameterSet}/{ref}/{kind}/TPM.tsv",
+		"results/de/salmon{parameterSet}/{ref}/{kind}/NumReads.tsv"
+	threads: 1
+	run:
+		data = []
+		names = []
+
+		samples = []
+		for index in range(0, len(input)):
+			samples.append(input[index].split("/")[5])
+
+		for index in range(0, len(input)):
+			with open(input[index], 'r') as file:
+				data.append({})
+				file.readline()
+				for line in file:
+					elements = line.rstrip().split(sep='\t')
+					data[index][elements[0]] = elements[1:len(elements)]
+					if index == 0:
+						names.append(elements[0])
+
+		for outindex in range(0, len(output)):
+			with open(output[outindex], 'w') as out:
+				out.write("Transcript\t" + "\t".join(samples) + "\n" )
+				for gene in names:
+					out.write(gene)
+					for index in range(0, len(input)):
+						out.write("\t" + data[index][gene][outindex])
+					out.write("\n")
