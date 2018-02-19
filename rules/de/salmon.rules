@@ -30,12 +30,14 @@ rule salmon:
 			os.remove(bam_file)
 
 rule salmon_tables:
-	input: expand("results/de/salmon{{parameterSet}}/{{ref}}/{{kind}}/{sample}/quant.sf", sample = config["samples"].keys())
+	input: expand("results/de/salmon{{parameterSet}}/{{ref}}/{{kind}}/{sample}/quant{{genes}}.sf", sample = config["samples"].keys())
 	output:
-		"results/de/salmon{parameterSet}/{ref}/{kind}/Length.tsv",
-		"results/de/salmon{parameterSet}/{ref}/{kind}/EffectiveLength.tsv",
-		"results/de/salmon{parameterSet}/{ref}/{kind}/TPM.tsv",
-		"results/de/salmon{parameterSet}/{ref}/{kind}/NumReads.tsv"
+		"results/de/salmon{parameterSet}/{ref}/{kind}/Length{genes}.tsv",
+		"results/de/salmon{parameterSet}/{ref}/{kind}/EffectiveLength{genes}.tsv",
+		"results/de/salmon{parameterSet}/{ref}/{kind}/TPM{genes}.tsv",
+		"results/de/salmon{parameterSet}/{ref}/{kind}/NumReads{genes}.tsv"
+	wildcard_constraints:
+		genes = "(.genes)?"
 	threads: 1
 	run:
 		data = []
@@ -57,7 +59,7 @@ rule salmon_tables:
 
 		for outindex in range(0, len(output)):
 			with open(output[outindex], 'w') as out:
-				out.write("Transcript\t" + "\t".join(samples) + "\n" )
+				out.write("\t" + "\t".join(samples) + "\n" )
 				for gene in names:
 					out.write(gene)
 					for index in range(0, len(input)):
