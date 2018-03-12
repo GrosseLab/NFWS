@@ -1,4 +1,4 @@
-# Snakefile for Illumina Trusight Cancer workflow
+# Snakefile for Test workflow
 
 configfile: "config.json"
 include: config["path_rules"] + "/general/samtools.rules"

@@ -1,18 +1,24 @@
 # Snakefile for FastQ only workflow
 
 configfile: "config.json"
-include: "/data/DefaultPipelines/rules/references/human.rules"
-include: "/data/DefaultPipelines/rules/references/illumina.rules"
-include: "/data/DefaultPipelines/rules/trim/trimmomatic.rules"
-include: "/data/DefaultPipelines/rules/mapping/bwa_mem_pe.rules"
-include: "/data/DefaultPipelines/rules/mapping/samfiles.rules"
-include: "/data/DefaultPipelines/rules/mapping/picard.rules"
-include: "/data/DefaultPipelines/rules/coverage/bed_coverage.rules"
-include: "/data/DefaultPipelines/rules/coverage/plots.rules"
-include: "/data/DefaultPipelines/rules/variant/gatk.rules"
-include: "/data/DefaultPipelines/rules/qa/fastqc.rules"
-include: "/data/DefaultPipelines/rules/de/feature_count.rules"
+include: config["path_rules"] + "/references/human.rules"
+include: config["path_rules"] + "/references/illumina.rules"
+include: config["path_rules"] + "/trim/trimmomatic.rules"
+include: config["path_rules"] + "/mapping/bwa_mem_pe.rules"
+include: config["path_rules"] + "/mapping/samfiles.rules"
+include: config["path_rules"] + "/mapping/picard.rules"
+include: config["path_rules"] + "/coverage/bed_coverage.rules"
+include: config["path_rules"] + "/coverage/plots.rules"
+include: config["path_rules"] + "/variant/gatk.rules"
+include: config["path_rules"] + "/qa/fastqc.rules"
+include: config["path_rules"] + "/de/feature_count.rules"
 
 rule all:
 	input:
 		expand("results/qa/fastqc/adapter_trimmed/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
+
+onsuccess:
+	shell('mail -s "Job Finished: ' + config["run"] + '" ' + config["notification_email"] + ' < {log}')
+
+onerror:
+	shell('mail -s "Job Error: ' + config["run"] + '" ' + config["notification_email"] + ' < {log}')

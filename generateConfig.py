@@ -17,6 +17,7 @@ parser.add_argument("--pi", metavar="NAME", type=str, help='NAME of the PI resps
 parser.add_argument("--researcher", metavar="NAME", type=str, help='NAME of the researcher respsonsible for the experiment', default="")
 parser.add_argument("--institution", metavar="NAME", type=str, help='NAME of the institution respsonsible for the experiment', default="")
 parser.add_argument("--text", metavar="TEXT", type=str, help='some descriptive TEXT', default="")
+parser.add_argument("--notify_email", metavar="MAILS", type=str, help='email address for success and error notifications', default="")
 
 args = parser.parse_args()
 # print(args)
@@ -75,6 +76,7 @@ with open(args.o, "w") as config:
 	'	"machine": "MiSeq",\n'
 	'	"platform": "illumina",\n'
 	'	"project_management_version": "2.0",\n'
+	'	"notification_email": "' + args.notify_email + '",\n'
 	'	"path_rules": "' + args.rules + '",\n\n'
 
 	'	"description": {\n'

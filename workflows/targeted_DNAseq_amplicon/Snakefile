@@ -1,0 +1,32 @@
+# Snakefile for amplicon enriched targeted DNAseq
+
+configfile: "config.json"
+include: config["path_rules"] + "/general/functions.rules"
+include: config["path_rules"] + "/general/samtools.rules"
+include: config["path_rules"] + "/references/human.rules"
+include: config["path_rules"] + "/references/illumina.rules"
+include: config["path_rules"] + "/trim/trimmomatic.rules"
+include: config["path_rules"] + "/mapping/bwa_mem_pe.rules"
+include: config["path_rules"] + "/mapping/picard.rules"
+include: config["path_rules"] + "/coverage/bed_coverage.rules"
+include: config["path_rules"] + "/coverage/plots.rules"
+include: config["path_rules"] + "/coverage/CNV.rules"
+include: config["path_rules"] + "/variant/gatk.rules"
+include: config["path_rules"] + "/qa/fastqc.rules"
+include: config["path_rules"] + "/de/feature_count.rules"
+
+rule all:
+	input:
+		"plots/coverage/illumina/hg19/adapter_trimmed/BRCA1-ENST00000357654.pdf"
+		,"plots/cum_coverage_goi/illumina/hg19/adapter_trimmed/cumulative_coverage_of_genes_of_interest.pdf"
+		,expand("results/coverage/illumina/hg19/adapter_trimmed/{patient}_20_20.lower100", patient = config["samples"].keys() )
+		,expand("results/coverage/illumina/hg19/adapter_trimmed/{patient}_20_20.lower60", patient = config["samples"].keys() )
+		,expand("results/coverage/illumina/hg19/adapter_trimmed/{patient}_20_20.lower30", patient = config["samples"].keys() )
+		,expand("results/coverage/illumina/hg19/adapter_trimmed/{patient}_20_20.lower10", patient = config["samples"].keys() )
+		,expand("results/qa/fastqc/adapter_trimmed/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
+
+onsuccess:
+	shell('mail -s "Job Finished: ' + config["run"] + '" ' + config["notification_email"] + ' < {log}')
+
+onerror:
+	shell('mail -s "Job Error: ' + config["run"] + '" ' + config["notification_email"] + ' < {log}')
