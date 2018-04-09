@@ -1,6 +1,7 @@
 #! python3
 import argparse
 import csv
+import codecs
 import datetime
 import re
 from os import listdir
@@ -26,7 +27,7 @@ args = parser.parse_args()
 run = ""
 seq_date = ""
 units_array = []
-with open(args.path + "/SampleSheet.csv") as csvfile:
+with codecs.open(args.path + "/SampleSheet.csv", encoding='iso-8859-1') as csvfile:
 	samplesheet = csv.reader(csvfile)
 	read_samples = False
 	read_reads = False
