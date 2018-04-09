@@ -6,6 +6,7 @@ rule fastqc:
     """
     input: "data/reads/{kind}/{file}.fastq.gz"
     output: expand("results/qa/fastqc{{parameterSet,.*}}/{{kind}}/{{file}}_fastqc.{suf}", suf=["html", "zip"])
+    version: subprocess.check_output("fastqc --version", shell=True)
     threads: 1
     params:
     	user = lambda wildcards: getParams("fastqc", wildcards.parameterSet),
