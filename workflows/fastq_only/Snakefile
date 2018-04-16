@@ -1,14 +1,16 @@
 # Snakefile for FastQ only workflow
 
 configfile: "config.json"
+include: config["path_rules"] + "/general/functions.rules"
+include: config["path_rules"] + "/general/samtools.rules"
 include: config["path_rules"] + "/references/human.rules"
 include: config["path_rules"] + "/references/illumina.rules"
 include: config["path_rules"] + "/trim/trimmomatic.rules"
 include: config["path_rules"] + "/mapping/bwa_mem_pe.rules"
-include: config["path_rules"] + "/mapping/samfiles.rules"
 include: config["path_rules"] + "/mapping/picard.rules"
 include: config["path_rules"] + "/coverage/bed_coverage.rules"
 include: config["path_rules"] + "/coverage/plots.rules"
+include: config["path_rules"] + "/coverage/CNV.rules"
 include: config["path_rules"] + "/variant/gatk.rules"
 include: config["path_rules"] + "/qa/fastqc.rules"
 include: config["path_rules"] + "/de/feature_count.rules"
