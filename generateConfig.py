@@ -10,7 +10,7 @@ from os import listdir
 parser = argparse.ArgumentParser(description='Generate a config.jason file for a project from an Illumina *SeqOutput folder.')
 parser.add_argument("path", type=str, help='path to the *SeqOutput folder')
 parser.add_argument("-o", metavar="PATH", type=str, help='path to the config file')
-parser.add_argument("--rules", type=str, help='path to the NFWS rules directory', default="/path/to/rules/dir")
+parser.add_argument("--rules", type=str, help='path to the NFWS rules directory', default="NFWS/rules")
 parser.add_argument("--email", metavar="MAILS", type=str, help='your email adress', default="")
 parser.add_argument("--estart", metavar="DATE", type=str, help='experiment start date', default="")
 parser.add_argument("--keep", metavar="DATE", type=str, help='keep data at least until DATE', default="")
