@@ -13,7 +13,7 @@ rule realign_info:
            idx = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference]["genome"] + ".fai",
            seqdic = lambda wildcards: config["ref_dir"] + re.sub('\.(fa|fasta)$', '.dict', config["references"][wildcards.reference]["genome"])
     output: temp("results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.realign.intervals.list")
-    version: subprocess.check_output("gatk --version", shell=True)
+    version: subprocess.check_output("conda list gatk4 | tail -n 1", shell=True)
     threads: 8
     params:
         user = lambda wildcards: getParams("RealignerTargetCreator", wildcards.parameterSet)
@@ -35,7 +35,7 @@ rule realign_reads:
            # snpdb_2 = config["ref_dir"] + "/human/{reference}/snp/1000G_phase1.indels.{reference}.sites.vcf",
            interval = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.realign.intervals.list"
     output: temp("results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.realign.bam")
-    version: subprocess.check_output("gatk --version", shell=True)
+    version: subprocess.check_output("conda list gatk4 | tail -n 1", shell=True)
     params:
         "--disable_bam_indexing",
         user = lambda wildcards: getParams("IndelRealigner", wildcards.parameterSet)
@@ -55,7 +55,7 @@ rule recalibrate_info:
            bam = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.bam",
            bai = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.bam.bai"
     output: temp("results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.recalibrate.grp")
-    version: subprocess.check_output("gatk --version", shell=True)
+    version: subprocess.check_output("conda list gatk4 | tail -n 1", shell=True)
     threads: 8
     params:
         user = lambda wildcards: getParams("BaseRecalibrator", wildcards.parameterSet)
@@ -66,7 +66,7 @@ rule recalibrate_bam:
            bam = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.bam",
            grp = "results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.recalibrate.grp"
     output: temp("results/mapping/{mapper}{parameterSet}/{reference}/{kind}/{prefix}.recalibrated.bam")
-    version: subprocess.check_output("gatk --version", shell=True)
+    version: subprocess.check_output("conda list gatk4 | tail -n 1", shell=True)
     threads: 8
     params:
       user = lambda wildcards: getParams("PrintReads", wildcards.parameterSet)
@@ -85,7 +85,7 @@ rule haplotype_caller:
            bams = lambda wildcards: expand("results/mapping/bwa" + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord_dedup.realign.recalibrated.bam", unit = config["samples"][wildcards.patient]),
            bais = lambda wildcards: expand("results/mapping/bwa" + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}_coord_dedup.realign.recalibrated.bam.bai", unit = config["samples"][wildcards.patient]),
     output: "results/variants/gatk{parameterSet}/{ref}/{kind}/{patient}.g.vcf"
-    version: subprocess.check_output("gatk --version", shell=True)
+    version: subprocess.check_output("conda list gatk4 | tail -n 1", shell=True)
     threads: 8
     params:
       "--emitRefConfidence GVCF",
@@ -102,7 +102,7 @@ rule gatk_genotyping_all:
     input: genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
            gvcfs = lambda wildcards: expand("results/variants/gatk" + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/{patient}.g.vcf", patient=config["samples"].keys())
     output: "results/variants/gatk{parameterSet}/{ref}/{kind}/all.vcf"
-    version: subprocess.check_output("gatk --version", shell=True)
+    version: subprocess.check_output("conda list gatk4 | tail -n 1", shell=True)
     threads: 15
     run:
       gvcfs = " --variant ".join(input.gvcfs)
@@ -116,7 +116,7 @@ rule gatk_genotyping:
     input: genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
            gvcf = "results/variants/gatk{parameterSet}/{ref}/{kind}/{sample}.g.vcf"
     output: "results/variants/gatk{parameterSet}/{ref}/{kind}/{sample,(?!all$).+}.vcf"
-    version: subprocess.check_output("gatk --version", shell=True)
+    version: subprocess.check_output("conda list gatk4 | tail -n 1", shell=True)
     threads: 15
     run:
       shell("gatk -T GenotypeGVCFs "
