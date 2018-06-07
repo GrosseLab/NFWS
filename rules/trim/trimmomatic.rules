@@ -9,14 +9,14 @@ rule trimmomatic_pe_adapter_trimming:
 		expand("data/reads/adapter_trimmed/{{pre}}{read}{{suf,.*}}.fastq.gz", read=["R1", "R2"]),
 		expand("data/reads/adapter_trimmed/{{pre}}{read}{{suf,.*}}_unpaired.fastq.gz", read=["R1", "R2"])
 	threads: 3
-	shell: "trimmomatic PE -threads {threads} -phred33 {input.fastqs} {output[0]} {output[2]} {output[1]} {output[3]} ILLUMINACLIP:{input.adapters}:2:30:10"
+	shell: "trimmomatic PE -threads {threads} -phred33 {input.fastqs} {output[0]} {output[2]} {output[1]} {output[3]} ILLUMINACLIP:{input.adapters}:2:30:5"
 
 rule trimmomatic_se_adapter_trimming:
 	input:
 		fastq = "data/reads/raw/{unit}.fastq.gz",
 		adapters = config["adapter_sequences"]
 	output: "data/reads/adapter_trimmed/{unit}.fastq.gz",
-	shell: "trimmomatic SE -phred33 {input.fastq} {output} ILLUMINACLIP:{input.adapters}:2:30:10"
+	shell: "trimmomatic SE -phred33 {input.fastq} {output} ILLUMINACLIP:{input.adapters}:2:30:5"
 
 rule trimmomatic_pe_quality_trimming:
 	input: expand("data/reads/adapter_trimmed/{{pre}}{read}{{suf}}.fastq.gz", read=["R1", "R2"])

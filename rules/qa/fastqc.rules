@@ -11,7 +11,6 @@ rule fastqc:
 	version: subprocess.check_output("fastqc --version", shell=True)
 	threads: 1
 	params:
-		"--kmers 7",
 		"--quiet",
 		user = lambda wildcards: getParams("fastqc", wildcards.parameterSet)
 	shell: "fastqc -t {threads} --adapters {input.adapter} {params} --outdir results/qa/fastqc{wildcards.parameterSet}/{wildcards.kind} {input.fastq}"
