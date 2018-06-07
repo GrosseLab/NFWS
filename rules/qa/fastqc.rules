@@ -1,14 +1,22 @@
 rule fastqc:
-    """
-    Computes quality reports for read data sets.
-    Note that the 'kind' can be applied to any subdirectory in data/reads.
-    E.g. Reads in data/reads/RAW result in a QA report in results/qa/fastqc/RAW
-    """
-    input: "data/reads/{kind}/{file}.fastq.gz"
-    output: expand("results/qa/fastqc{{parameterSet,.*}}/{{kind}}/{{file}}_fastqc.{suf}", suf=["html", "zip"])
-    version: subprocess.check_output("fastqc --version", shell=True)
-    threads: 1
-    params:
-    	user = lambda wildcards: getParams("fastqc", wildcards.parameterSet),
-    	outdir = "results/qa/fastqc{parameterSet}/{kind}"
-    shell: "fastqc -t {threads} --outdir {params.outdir} {params.user} {input}"
+	"""
+	Computes quality reports for read data sets.
+	Note that the 'kind' can be applied to any subdirectory in data/reads.
+	E.g. Reads in data/reads/RAW result in a QA report in results/qa/fastqc/RAW
+	"""
+	input:
+		fastq = "data/reads/{kind}/{file}.fastq.gz",
+		adapter = config["adapter_sequences"] + ".tsv"
+	output: expand("results/qa/fastqc{{parameterSet,.*}}/{{kind}}/{{file}}_fastqc.{suf}", suf=["html", "zip"])
+	version: subprocess.check_output("fastqc --version", shell=True)
+	threads: 1
+	params:
+		"--kmers 7",
+		"--quiet",
+		user = lambda wildcards: getParams("fastqc", wildcards.parameterSet)
+	shell: "fastqc -t {threads} --adapters {input.adapter} {params} --outdir results/qa/fastqc{wildcards.parameterSet}/{wildcards.kind} {input.fastq}"
+
+rule generate_adapter_file:
+	input: config["adapter_sequences"]
+	output: temp(config["adapter_sequences"] + ".tsv")
+	shell: "awk '{{key=substr($0, 2); getline; print key \"\t\" $0;}}' {input} > {output}"
