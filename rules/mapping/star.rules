@@ -60,11 +60,11 @@ rule star_mapping:
 
 rule star_stat:
 	input: lambda wildcards: expand("results/mapping/star" + wildcards.parameterSet +"/" + wildcards.ref + "/" + wildcards.kind + "/{unit}/Log.final.out", unit = config['units'].keys())
-	output: "results/stat/star{parameterSet}/{ref}/{kind}/all.tsv"
+	output: "results/qa/star{parameterSet}/{ref}/{kind}/all.tsv"
 	run:
 		# init results table
 		res_table = dict()
-		# every file becomes a line in the results table
+		# every file becomes a row in the results table
 		for curr_file in input:
 			res_line = dict()
 			with open(curr_file) as stat_file:
@@ -77,9 +77,9 @@ rule star_stat:
 
 		# write res_table
 		with open(output[0], "w+") as out:
-			my_keys = res_table[list(res_table.keys())[0]].keys()
+			my_keys = sorted(res_table[list(res_table.keys())[0]].keys(), key=str.lower)
 			out.write("File\t" + "\t".join(my_keys) + "\n")
-			for line_key in res_table.keys():
+			for line_key in sorted(res_table.keys(), key=str.lower):
 				line = res_table[line_key]
 				out.write(line_key + "\t" + "\t".join([line.get(key) for key in my_keys]) + "\n" )
 			out.close()
