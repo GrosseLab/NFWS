@@ -9,9 +9,9 @@
 
 rule mark_duplicates:
     """Marks duplicate fragments."""
-    input: "{path}/{prefix}_coord.bam"
-    output: bam = "{path}/{prefix}_coord_dedup.bam",
-            metrics = "{path}/dedup_metrics/{prefix}_dedup.report"
+    input: "results/mapping/{mapper}{parameterSet}/{ref}/{kind}/{unit}_coord.bam"
+    output: bam = temp("results/mapping/{mapper}{parameterSet}/{ref}/{kind}/{unit}_coord_dedup.bam"),
+            metrics = "results/qa/picard/{mapper}{parameterSet}/{ref}/{kind}/{unit}_dedup.report"
     shell: "picard MarkDuplicates INPUT={input} OUTPUT={output.bam} METRICS_FILE={output.metrics}"
 
 

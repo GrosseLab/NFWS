@@ -43,7 +43,7 @@ rule generate_manifest:
 					for transcript in ensembl_db.children(gene, featuretype='transcript'):
 						if 'ccds_id' in transcript.attributes:
 							for CDS in ensembl_db.children(transcript, featuretype='CDS'):
-								manifest.write( "chr" + CDS.seqid + "\t" + str(CDS.start) + "\t" + str(CDS.end) + "\t" + CDS["transcript_id"][0] + "-" + CDS["exon_number"][0] + "-" + CDS["gene_name"][0] + "\n" )
+								manifest.write( "chr" + CDS.seqid + "\t" + str(CDS.start) + "\t" + str(CDS.end+1) + "\t" + CDS["transcript_id"][0] + "-" + CDS["exon_number"][0] + "-" + CDS["gene_name"][0] + "\n" )
 
 rule target_bad_coverage:
     """Only output Regions under a given covergae"""
