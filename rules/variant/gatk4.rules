@@ -1,0 +1,127 @@
+# Quality score recalibration
+rule recalibrate_info:
+	input:
+		genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
+		bams = lambda wildcards: expand("results/mapping/bwa" + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/{sample}_coord_dedup.bam", sample = config["samples"][wildcards.patient])
+	output: temp("results/variants/gatk4{parameterSet}/{ref}/{kind}/{patient}.recal.table")
+	version: subprocess.check_output("gatk BaseRecalibrator --version 2>&1 | grep 'Version'", shell=True)
+	params:
+		user = lambda wildcards: getParams("BaseRecalibrator", wildcards.parameterSet)
+	run:
+		import tempfile
+		if len(input.bams) == 1:
+			bam_file = input.bams[0]
+		else:
+			bam_file = tempfile.mkstemp(prefix="./", suffix=".bam")[1]
+			shell("samtools merge -f {bam_file} {input.bams}")
+
+		shell("gatk BaseRecalibrator {params} -R {input.genome} -I {bam_file} -O {output}")
+
+		if len(input.bams) > 1:
+			os.remove(bam_file)
+
+rule apply_bqsr:
+	input:
+		genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.reference]["genome"],
+		bams = lambda wildcards: expand("results/mapping/bwa" + wildcards.parameterSet + "/" + wildcards.reference + "/" + wildcards.kind + "/{sample}_coord_dedup.bam", sample = config["samples"][wildcards.patient]),
+		recal_table = "results/variants/gatk4{parameterSet}/{reference}/{kind}/{patient}.recal.table"
+	output:
+		bam = temp("results/variants/gatk4{parameterSet}/{reference}/{kind}/{patient}_coord_dedup_recal.bam"),
+		bai = temp("results/variants/gatk4{parameterSet}/{reference}/{kind}/{patient}_coord_dedup_recal.bai")
+	version: subprocess.check_output("gatk ApplyBQSR --version 2>&1 | grep 'Version'", shell=True)
+	params:
+		user = lambda wildcards: getParams("ApplyBQSR", wildcards.parameterSet)
+	run:
+		import tempfile
+		if len(input.bams) == 1:
+			bam_file = input.bams[0]
+		else:
+			bam_file = tempfile.mkstemp(prefix="./", suffix=".bam")[1]
+			shell("samtools merge -f {bam_file} {input.bams}")
+
+		shell("gatk ApplyBQSR {params} -R {input.genome} -I {bam_file} --bqsr-recal-file {input.recal_table} -O {output.bam}")
+
+		if len(input.bams) > 1:
+			os.remove(bam_file)
+	
+# Variant Calling
+ruleorder: haplotype_caller > genotype_gvcf
+rule haplotype_caller:
+	input:
+		genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
+		bam = "results/variants/gatk4{parameterSet}/{ref}/{kind}/{patient}_coord_dedup_recal.bam",
+		bai = "results/variants/gatk4{parameterSet}/{ref}/{kind}/{patient}_coord_dedup_recal.bai"
+	output:
+		gvcf = "results/variants/gatk4{parameterSet}/{ref}/{kind}/{patient}.g.vcf.gz",
+		index = "results/variants/gatk4{parameterSet}/{ref}/{kind}/{patient}.g.vcf.gz.tbi"
+	wildcard_constraints: patient='.*(?<!all)'
+	version: subprocess.check_output("gatk HaplotypeCaller --version 2>&1 | grep 'Version'", shell=True)
+	params:
+		"-ERC GVCF",
+		user = lambda wildcards: getParams("HaplotypeCaller", wildcards.parameterSet)
+	shell: "gatk --java-options '-Xmx4g' HaplotypeCaller {params} -R {input.genome} -I {input.bam} -O {output.gvcf}"
+
+# combine gvcfs for all samples
+rule combine_gvcfs:
+	input:
+		genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
+		gvcf = expand("results/variants/gatk4{{parameterSet}}/{{ref}}/{{kind}}/{patient}.g.vcf.gz", patient=config["samples"].keys()),
+	output:
+		gvcf = "results/variants/gatk4{parameterSet}/{ref}/{kind}/all.g.vcf.gz",
+		index = "results/variants/gatk4{parameterSet}/{ref}/{kind}/all.g.vcf.gz.tbi"
+	version: subprocess.check_output("gatk CombineGVCFs --version 2>&1 | grep 'Version'", shell=True)
+	params:
+		user = lambda wildcards: getParams("CombineGVCFs", wildcards.parameterSet)
+	run:
+		gvcfs = " --variant ".join(input.gvcf)
+		shell("gatk CombineGVCFs --reference {input.genome} --variant {gvcfs} --output {output.gvcf}")
+
+# vcf generation
+rule genotype_gvcf:
+	input:
+		genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
+		gvcf = "results/variants/gatk4{parameterSet}/{ref}/{kind}/{samples}.g.vcf.gz",
+		index = "results/variants/gatk4{parameterSet}/{ref}/{kind}/{samples}.g.vcf.gz.tbi"
+	output:
+		vcf = "results/variants/gatk4{parameterSet}/{ref}/{kind}/{samples}.vcf",
+		idx = "results/variants/gatk4{parameterSet}/{ref}/{kind}/{samples}.vcf.idx"
+	version: subprocess.check_output("gatk GenotypeGVCFs --version 2>&1 | grep 'Version'", shell=True)
+	params:
+		user = lambda wildcards: getParams("GenotypeGVCFs", wildcards.parameterSet)
+	shell: "gatk GenotypeGVCFs {params} --reference {input.genome} --variant {input.gvcf} --output {output.vcf}"
+
+# rule genomics_db_import:
+# 	input:
+# 		gvcf = "results/variants/gatk4{parameterSet}/{ref}/{kind}/all.g.vcf.gz"
+# 	output: "results/variants/gatk4{parameterSet}/{ref}/{kind}/gendb/{chr}.gendb"
+# 	version: subprocess.check_output("gatk GenomicsDBImport --version 2>&1 | grep 'Version'", shell=True)
+# 	params:
+# 		user = lambda wildcards: getParams("GenomicsDBImport", wildcards.parameterSet)
+# 	shell: "gatk --java-options '-Xmx4g -Xms4g' GenomicsDBImport {params} --variant {input.gvcf} --genomicsdb-workspace-path '{output}' --intervals '{wildcards.chr}'"
+
+# def get_chr(path):
+# 	import re
+# 	ret = []
+# 	with open(path) as genome:
+# 		for line in genome:
+# 			split_line = line.rstrip().split("\t")
+# 			chrom = split_line[0]
+# 			if re.match('.*_.*', chrom) is None and re.match('HLA.*', chrom) is None:
+# 				ret.append(chrom)
+# 	return(ret)
+
+# rule genotype_all_sample:
+# 	input:
+# 		genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
+# 		gendb = lambda wildcards: expand("results/variants/gatk4" + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/gendb/{chr}.gendb", chr = get_chr(config["ref_dir"] + config["references"][wildcards.ref]["genome"] + ".fai"))
+# 	output:
+# 		vcf = "results/variants/gatk4{parameterSet}/{ref}/{kind}/all.vcf",
+# 		idx = "results/variants/gatk4{parameterSet}/{ref}/{kind}/all.vcf.idx"
+# 	version: subprocess.check_output("gatk GenotypeGVCFs --version 2>&1 | grep 'Version'", shell=True)
+# 	params:
+# 		user = lambda wildcards: getParams("GenotypeGVCFs", wildcards.parameterSet)
+# 	run:
+# 		gendbs = " --variant gendb://".join(input.gendb)
+# 		shell("gatk GenotypeGVCFs {params} --reference {input.genome} --variant gendb://{gendbs} --output {output.vcf}")
+
+
