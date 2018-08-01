@@ -89,39 +89,3 @@ rule genotype_gvcf:
 	params:
 		user = lambda wildcards: getParams("GenotypeGVCFs", wildcards.parameterSet)
 	shell: "gatk GenotypeGVCFs {params} --reference {input.genome} --variant {input.gvcf} --output {output.vcf}"
-
-# rule genomics_db_import:
-# 	input:
-# 		gvcf = "results/variants/gatk4{parameterSet}/{ref}/{kind}/all.g.vcf.gz"
-# 	output: "results/variants/gatk4{parameterSet}/{ref}/{kind}/gendb/{chr}.gendb"
-# 	version: subprocess.check_output("gatk GenomicsDBImport --version 2>&1 | grep 'Version'", shell=True)
-# 	params:
-# 		user = lambda wildcards: getParams("GenomicsDBImport", wildcards.parameterSet)
-# 	shell: "gatk --java-options '-Xmx4g -Xms4g' GenomicsDBImport {params} --variant {input.gvcf} --genomicsdb-workspace-path '{output}' --intervals '{wildcards.chr}'"
-
-# def get_chr(path):
-# 	import re
-# 	ret = []
-# 	with open(path) as genome:
-# 		for line in genome:
-# 			split_line = line.rstrip().split("\t")
-# 			chrom = split_line[0]
-# 			if re.match('.*_.*', chrom) is None and re.match('HLA.*', chrom) is None:
-# 				ret.append(chrom)
-# 	return(ret)
-
-# rule genotype_all_sample:
-# 	input:
-# 		genome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome"],
-# 		gendb = lambda wildcards: expand("results/variants/gatk4" + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/gendb/{chr}.gendb", chr = get_chr(config["ref_dir"] + config["references"][wildcards.ref]["genome"] + ".fai"))
-# 	output:
-# 		vcf = "results/variants/gatk4{parameterSet}/{ref}/{kind}/all.vcf",
-# 		idx = "results/variants/gatk4{parameterSet}/{ref}/{kind}/all.vcf.idx"
-# 	version: subprocess.check_output("gatk GenotypeGVCFs --version 2>&1 | grep 'Version'", shell=True)
-# 	params:
-# 		user = lambda wildcards: getParams("GenotypeGVCFs", wildcards.parameterSet)
-# 	run:
-# 		gendbs = " --variant gendb://".join(input.gendb)
-# 		shell("gatk GenotypeGVCFs {params} --reference {input.genome} --variant gendb://{gendbs} --output {output.vcf}")
-
-
