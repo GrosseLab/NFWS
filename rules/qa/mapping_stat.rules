@@ -1,0 +1,63 @@
+rule sequenced_reads:
+	input: lambda wildcards: expand("data/reads/" + wildcards.kind + "/{file}", file = config["units"][wildcards.unit])
+	output:
+		out1 = "results/qa/reads/{kind}/{unit}/reads_1.tsv",
+		out2 = "results/qa/reads/{kind}/{unit}/reads_2.tsv"
+	threads: 1
+	version: "bash 1.0"
+	run:
+		shell("zcat {input[0]} | wc -l | awk '{{print $1/4}}' > {output.out1}")
+		if len(input) == 2:
+		 	shell("zcat {input[1]} | wc -l | awk '{{print $1/4}}' > {output.out2}")
+		else:
+			shell("echo 'NA' > {output.out2}")
+
+
+rule mapped_reads:
+	input: "results/mapping/{mapper}{parameterSet}/{ref}/{kind}/{unit}.bam"
+	output:
+		"results/qa/mapping/{mapper}{parameterSet}/{ref}/{kind}/{unit}/mapped_reads_1.tsv",
+		"results/qa/mapping/{mapper}{parameterSet}/{ref}/{kind}/{unit}/mapped_reads_2.tsv",
+		"results/qa/mapping/{mapper}{parameterSet}/{ref}/{kind}/{unit}/mapped_pairs.tsv"
+	threads: 1
+	version: "bash 1.0"
+	run:
+		shell("samtools view {input} -F 0x2948 | wc -l > {output[0]}")
+		shell("samtools view {input} -F 0x2884 | wc -l > {output[1]}")
+		shell("samtools view {input} -F 2956 -f 67 | wc -l > {output[2]}")
+
+rule collect_stats:
+	input:
+		reads1 = expand("results/qa/reads/{{kind}}/{unit}/reads_1.tsv", unit=config["units"].keys()),
+		reads2 = expand("results/qa/reads/{{kind}}/{unit}/reads_2.tsv", unit=config["units"].keys()),
+		mapped_reads1 = expand("results/qa/mapping/{{mapper}}{{parameterSet}}/{{ref}}/{{kind}}/{unit}/mapped_reads_1.tsv", unit=config["units"].keys()),
+		mapped_reads2 = expand("results/qa/mapping/{{mapper}}{{parameterSet}}/{{ref}}/{{kind}}/{unit}/mapped_reads_2.tsv", unit=config["units"].keys()),
+		mapped_pairs = expand("results/qa/mapping/{{mapper}}{{parameterSet}}/{{ref}}/{{kind}}/{unit}/mapped_pairs.tsv", unit=config["units"].keys())
+	output: "results/qa/mapping/{mapper}{parameterSet}/{ref}/{kind}/mapping_rates.tsv"
+	run:
+		with open(output[0], mode='w') as out:
+			out.write("sample\treads R1\treads R2\ttotal reads\tmapped reads R1\tmapped reads R2\ttotal mapped reads\tmapped pairs\n")
+			units = list(config["units"].keys())
+			offset = len(units)
+
+			
+			for i in range(offset):
+				with open("results/qa/reads/" + wildcards.kind + "/" + units[i] + "/reads_1.tsv", 'r') as tmp:
+					reads1 = int(tmp.readline().strip())
+				with open("results/qa/reads/" + wildcards.kind + "/" + units[i] + "/reads_2.tsv", 'r') as tmp:
+					reads2 = int(tmp.readline().strip())
+				with open("results/qa/mapping/" + wildcards.mapper +  wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/" + units[i] + "/mapped_reads_1.tsv", 'r') as tmp:
+					mapped_reads1 = int(tmp.readline().strip())
+				with open("results/qa/mapping/" + wildcards.mapper +  wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/" + units[i] + "/mapped_reads_2.tsv", 'r') as tmp:
+					mapped_reads2 = int(tmp.readline().strip())
+				with open("results/qa/mapping/" + wildcards.mapper +  wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/" + units[i] + "/mapped_pairs.tsv", 'r') as tmp:
+					mapped_pairs = int(tmp.readline().strip())
+
+				out.write(units[i] + "\t" +
+					str(reads1) + "\t" +
+					str(reads2) + "\t" +
+					str(reads1+reads2) + "\t" +
+					str(round(mapped_reads1/reads1*100, 2)) + "\t" +
+					str(round(mapped_reads2/reads2*100, 2)) + "\t" +
+					str(round((mapped_reads1+mapped_reads2)/(reads1+reads2)*100, 2)) + "\t" +
+					str(round(mapped_pairs*2/(reads1+reads2)*100, 2)) + "\n")
