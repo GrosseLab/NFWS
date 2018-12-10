@@ -13,7 +13,6 @@ rule salmon:
 		"--output  results/de/salmon{parameterSet}/{ref}/{kind}/{sample}",
 		"--gcBias",
 		"--seqBias",
-		"--useErrorModel",
 		"--numBootstraps 1000",
 		user = lambda wildcards: getParams("salmon", wildcards.parameterSet)
 	run:
