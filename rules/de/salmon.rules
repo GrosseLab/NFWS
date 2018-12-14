@@ -6,28 +6,19 @@ rule salmon:
 	output:
 		"results/de/salmon{parameterSet}/{ref}/{kind}/{sample}/quant.sf",
 		"results/de/salmon{parameterSet}/{ref}/{kind}/{sample}/quant.genes.sf"
-	version: subprocess.check_output("salmon --version", shell=True)
-	threads: 15
+	# version: subprocess.check_output("salmon --version", shell=True)
+	threads: 16
 	params:
 		"--libType A",
-		"--output  results/de/salmon{parameterSet}/{ref}/{kind}/{sample}",
+		"--output results/de/salmon{parameterSet}/{ref}/{kind}/{sample}",
 		"--gcBias",
 		"--seqBias",
-		"--useErrorModel",
 		"--numBootstraps 1000",
 		user = lambda wildcards: getParams("salmon", wildcards.parameterSet)
-	run:
-		import tempfile
-		if len(input.bams) == 1:
-			bam_file = input.bams[0]
-		else:
-			bam_file = tempfile.mkstemp(prefix="./", suffix=".bam")[1]
-			shell("samtools merge -f {bam_file} {input.bams}")
-
-		shell("salmon quant --threads {threads} --targets {input.transcriptome} --alignments {bam_file} --geneMap {input.gtf} {params}")
-
-		if len(input.bams) > 1:
-			os.remove(bam_file)
+	conda:
+		"../../envs/salmon.yaml"
+	script:
+		"salmon.py"
 
 rule salmon_tables:
 	input: expand("results/de/salmon{{parameterSet}}/{{ref}}/{{kind}}/{sample}/quant{{genes}}.sf", sample = config["samples"].keys())

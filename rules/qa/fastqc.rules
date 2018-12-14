@@ -1,3 +1,5 @@
+# singularity: "docker://continuumio/miniconda3"
+
 rule fastqc:
 	"""
 	Computes quality reports for read data sets.
@@ -8,11 +10,13 @@ rule fastqc:
 		fastq = "data/reads/{kind}/{file}.fastq.gz",
 		adapter = config["adapter_sequences"] + ".tsv"
 	output: expand("results/qa/fastqc{{parameterSet,.*}}/{{kind}}/{{file}}_fastqc.{suf}", suf=["html", "zip"])
-	version: subprocess.check_output("fastqc --version", shell=True)
+	# version: subprocess.check_output("fastqc --version", shell=True)
 	threads: 1
 	params:
 		"--quiet",
 		user = lambda wildcards: getParams("fastqc", wildcards.parameterSet)
+	conda:
+		"../../envs/fastqc.yaml"
 	shell: "fastqc -t {threads} --adapters {input.adapter} {params} --outdir results/qa/fastqc{wildcards.parameterSet}/{wildcards.kind} {input.fastq}"
 
 rule generate_adapter_file:
