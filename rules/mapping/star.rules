@@ -5,7 +5,6 @@ rule star_index:
 		genome = "{genome_file}",
 		gtf = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome_annotation"]
 	output: expand("{{genome_file}}_STAR{{parameterSet}}/{{ref}}/{file}", file = STAR_INDEX_FILES)
-# 	version: subprocess.check_output("STAR --version", shell=True)
 	threads: 24
 	params:
 		"--genomeDir {genome_file}_STAR{parameterSet}/{ref}/",
@@ -24,7 +23,6 @@ rule star_mapping:
 		genome_bam = "results/mapping/star{parameterSet}/{ref}/{kind}/{unit}.bam",
 		trans_bam = "results/mapping/star{parameterSet}/{ref}/{kind}/{unit}/Aligned.toTranscriptome.out.bam",
 		stat = "results/mapping/star{parameterSet}/{ref}/{kind}/{unit}/Log.final.out"
-# 	version: subprocess.check_output("STAR --version", shell=True)
 	threads: 4
 	params:
 		lambda wildcards: "--genomeDir " + config['ref_dir'] + config['references'][wildcards.ref]["genome"] + "_STAR" + wildcards.parameterSet + "/" + wildcards.ref,
