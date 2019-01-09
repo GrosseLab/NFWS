@@ -2,11 +2,10 @@ rule salmon:
 	input:
 		bams = lambda wildcards: expand("results/mapping/star" + wildcards.parameterSet + "/" + wildcards.ref + "/" + wildcards.kind + "/{unit}/Aligned.toTranscriptome.out.bam", unit = config['samples'][wildcards.sample]),
 		transcriptome = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["transcriptome"],
-		gtf = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome_annotation"]
+		# gtf = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome_annotation"]
 	output:
-		"results/de/salmon{parameterSet}/{ref}/{kind}/{sample}/quant.sf",
-		"results/de/salmon{parameterSet}/{ref}/{kind}/{sample}/quant.genes.sf"
-	# version: subprocess.check_output("salmon --version", shell=True)
+		"results/de/salmon{parameterSet}/{ref}/{kind}/{sample}/quant.sf"
+		# "results/de/salmon{parameterSet}/{ref}/{kind}/{sample}/quant.genes.sf"
 	threads: 16
 	params:
 		"--libType A",
