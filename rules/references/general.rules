@@ -1,7 +1,7 @@
 def annotation_to_ref(annotation):
 	for ref in config["references"].keys():
 		if config["references"][ref]["genome_annotation"] == annotation:
-			return(config["ref_dir"] + config["references"][ref]["genome"])
+			return(ref)
 	return("")
 
 rule genes_gffutils_create_db_gtf:
@@ -22,7 +22,7 @@ rule genes_gffutils_create_db_gff3:
 
 rule extract_transcriptome_seq:
 	input:
-		genome = lambda wildcards: annotation_to_ref(wildcards.annotation),
+		genome = lambda wildcards: config["ref_dir"] + config["references"][annotation_to_ref(wildcards.annotation)]["genome"],
 		annotation_db = lambda wildcards: config["ref_dir"] + re.sub('\.(gff3|gtf|bed)$', '.db', wildcards.annotation)
 	output: config["ref_dir"] + "{annotation}.{feature}.fa"
 	conda:

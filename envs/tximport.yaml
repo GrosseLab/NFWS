@@ -1,0 +1,6 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconductor-tximport=1.8.0
+  - r-jsonlite

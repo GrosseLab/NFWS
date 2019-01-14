@@ -20,14 +20,14 @@ rule salmon:
 		"salmon.py"
 
 rule salmon_tables:
-	input: expand("results/de/salmon{{parameterSet}}/{{ref}}/{{kind}}/{sample}/quant{{genes}}.sf", sample = config["samples"].keys())
+	input: expand("results/de/salmon{{parameterSet}}/{{ref}}/{{kind}}/{sample}/quant.sf", sample = config["samples"].keys())
 	output:
-		"results/de/salmon{parameterSet}/{ref}/{kind}/Length{genes}.tsv",
-		"results/de/salmon{parameterSet}/{ref}/{kind}/EffectiveLength{genes}.tsv",
-		"results/de/salmon{parameterSet}/{ref}/{kind}/TPM{genes}.tsv",
-		"results/de/salmon{parameterSet}/{ref}/{kind}/NumReads{genes}.tsv"
-	wildcard_constraints:
-		genes = "(.genes)?"
+		"results/de/salmon{parameterSet}/{ref}/{kind}/Length.tsv",
+		"results/de/salmon{parameterSet}/{ref}/{kind}/EffectiveLength.tsv",
+		"results/de/salmon{parameterSet}/{ref}/{kind}/TPM.tsv",
+		"results/de/salmon{parameterSet}/{ref}/{kind}/NumReads.tsv"
+	# wildcard_constraints:
+	# 	genes = "(.genes)?"
 	threads: 1
 	run:
 		data = []
