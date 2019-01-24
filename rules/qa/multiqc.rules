@@ -15,7 +15,8 @@ rule multiqc_star:
 	output:
 		report("results/qa/multiqc/star{parameterSet,.*}_{ref}_{kind}.html", caption="../../reports/star.rst")
 	wildcard_constraints:
-		kind="(raw|adapter_trimmed|quality_trimmed)"
+		kind="(raw|adapter_trimmed|quality_trimmed)",
+		ref="(" + "|".join(config["references"].keys()) + ")"
 	conda:
 		"../../envs/multiqc.yaml"
 	shell: "multiqc -f results/mapping/star{wildcards.parameterSet}/{wildcards.ref}/{wildcards.kind}/ --filename {output}"
