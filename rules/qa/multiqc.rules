@@ -7,7 +7,7 @@ rule multiqc_fastqc:
 		kind="(raw|adapter_trimmed|quality_trimmed)"
 	conda:
 		"../../envs/multiqc.yaml"
-	shell: "multiqc results/qa/fastqc{wildcards.parameterSet}/{wildcards.kind}/ --filename {output}"
+	shell: "multiqc -f results/qa/fastqc{wildcards.parameterSet}/{wildcards.kind}/ --filename {output}"
 
 rule multiqc_star:
 	input:
@@ -18,4 +18,4 @@ rule multiqc_star:
 		kind="(raw|adapter_trimmed|quality_trimmed)"
 	conda:
 		"../../envs/multiqc.yaml"
-	shell: "multiqc results/mapping/star{wildcards.parameterSet}/{wildcards.ref}/{wildcards.kind}/ --filename {output}"
+	shell: "multiqc -f results/mapping/star{wildcards.parameterSet}/{wildcards.ref}/{wildcards.kind}/ --filename {output}"
