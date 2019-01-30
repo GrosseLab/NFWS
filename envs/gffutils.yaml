@@ -2,5 +2,5 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - gffutils
-  - biopython
+  - gffutils=0.9
+  - biopython=1.73

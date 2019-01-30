@@ -2,5 +2,5 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - salmon
-  - samtools
+  - salmon=0.12.0
+  - samtools=1.9

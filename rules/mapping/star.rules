@@ -12,7 +12,7 @@ rule star_index:
 		user = lambda wildcards: getParams("star", wildcards.parameterSet)
 	conda:
 		"../../envs/star.yaml"
-	shell: "STAR --runMode genomeGenerate --genomeFastaFiles {input.genome} --sjdbGTFfile {input.gtf} --runThreadN {threads} {params}"
+	shell: "STAR --runMode genomeGenerate --outTmpDir $(mktemp -d)/_STARtmp --genomeFastaFiles {input.genome} --sjdbGTFfile {input.gtf} --runThreadN {threads} {params}"
 
 rule star_mapping:
 	input:
