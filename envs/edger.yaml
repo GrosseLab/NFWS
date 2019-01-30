@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconductor-edger=3.22.5
+  - r-ggplot2=3.0.0
+  - r-pheatmap

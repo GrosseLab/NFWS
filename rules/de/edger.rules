@@ -1,0 +1,23 @@
+rule edger:
+	input:
+		"results/de/salmon{parameterSet}/{ref}/{kind}/counts{genes}.tsv",
+		"results/de/salmon{parameterSet}/{ref}/{kind}/length{genes}.tsv"
+	output:
+		tpms = "results/de/edgeR{parameterSet}/{ref}/{kind}/tpms{genes}.csv",
+		rpkms = "results/de/edgeR{parameterSet}/{ref}/{kind}/rpkms{genes}.csv",
+		plot1 = "plots/edgeR{parameterSet}/{ref}/{kind}/Clustering_on_TPMs{genes}.pdf",
+		plot2 = "plots/edgeR{parameterSet}/{ref}/{kind}/Clustering_UPMGA_Spearman_on_TPMs{genes}.pdf",
+		plot3 = "plots/edgeR{parameterSet}/{ref}/{kind}/MDS_on_TPMs{genes}.pdf",
+		plot4 = "plots/edgeR{parameterSet}/{ref}/{kind}/densities{genes}.pdf",
+		plot5 = "plots/edgeR{parameterSet}/{ref}/{kind}/boxplots{genes}.pdf",
+		plot6 = "plots/edgeR{parameterSet}/{ref}/{kind}/rle_plot{genes}.pdf",
+		plot7 = "plots/edgeR{parameterSet}/{ref}/{kind}/heatmap_TPM_cor{genes}.pdf",
+		plot8 = "plots/edgeR{parameterSet}/{ref}/{kind}/heatmap_log-TPM_cor{genes}.pdf",
+		plot9 = "plots/edgeR{parameterSet}/{ref}/{kind}/heatmap_TPM_rankcor{genes}.pdf",
+		plot_libSize = "plots/edgeR{parameterSet}/{ref}/{kind}/library_size{genes}.pdf"
+	wildcard_constraints:
+		genes="(\.genes|)"
+	conda:
+		"../../envs/edger.yaml"
+	script:
+		"edgeR.R"
