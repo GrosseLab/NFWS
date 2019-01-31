@@ -5,6 +5,8 @@ library(pheatmap)
 library(ggplot2)
 # library(tximport)
 
+saveRDS(snakemake, file="debug_edger.rds")
+
 plotPCA <- function(exp_mat, groups, do.legend=T, log=T, do.MDS=F,do.ggplot=T,epsilon=1, plot_label = F, plot_chull=TRUE,plot_geom_path=FALSE,plot_title=""){
   
   if(!is.factor(groups)){
@@ -108,7 +110,7 @@ length <- read.table(snakemake@input[[2]])
 rep_list <- snakemake@config[["replicates"]]
 rep_names <- names(rep_list)
 rep_dict <- rep(rep_names, lapply(rep_list, length))
-names(rep_dict) <- gsub("-", ".", do.call(c, rep_list[rep_names]))
+names(rep_dict) <- gsub("^(?=[0-9])", "X", gsub("-", ".", do.call(c, rep_list[rep_names])), perl=T)
 group <- factor(rep_dict[colnames(counts)], levels = rep_names)
 
 normMat <- length
