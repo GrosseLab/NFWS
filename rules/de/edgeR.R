@@ -102,14 +102,13 @@ plotPCA <- function(exp_mat, groups, do.legend=T, log=T, do.MDS=F,do.ggplot=T,ep
   return(res.list)
 }
 
-
 counts <- read.table(snakemake@input[[1]])
 length <- read.table(snakemake@input[[2]])
 
 rep_list <- snakemake@config[["replicates"]]
 rep_names <- names(rep_list)
 rep_dict <- rep(rep_names, lapply(rep_list, length))
-names(rep_dict) <- do.call(c, rep_list[rep_names])
+names(rep_dict) <- gsub("-", ".", do.call(c, rep_list[rep_names]))
 group <- factor(rep_dict[colnames(counts)], levels = rep_names)
 
 normMat <- length
@@ -148,16 +147,13 @@ summarize_replicates <- function(exp_mat, groups, method=mean, changeColNames = 
 	return(sum_exp_mat)
 }
 tpm_avrg<-summarize_replicates(tpm, group)
-# colnames(tpm_avrg)<-as.numeric(colnames(tpm_avrg)) - 1
 rpkm_avrg<-summarize_replicates(rpkm, group)
-# colnames(rpkm_avrg)<-as.numeric(colnames(rpkm_avrg)) - 1
 
-# dir.create("results/de/edgeR/TAIR10/quality_trimmed", recursive = T)
+# write out tables
 write.csv(tpm_avrg, file=snakemake@output[["tpms"]], quote=F)
 write.csv(rpkm_avrg, file=snakemake@output[["rpkms"]], quote=F)
 
-# QA
-# dir.create(paste0("plots/", torg))
+# write out plots
 pdf(snakemake@output[["plot1"]])
 	plot(hclust(dist(t(tpm))), xlab="Sample")
 dev.off()
