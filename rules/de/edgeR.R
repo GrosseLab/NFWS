@@ -5,8 +5,6 @@ library(pheatmap)
 library(ggplot2)
 # library(tximport)
 
-saveRDS(snakemake, file="debug_edger.rds")
-
 plotPCA <- function(exp_mat, groups, do.legend=T, log=T, do.MDS=F,do.ggplot=T,epsilon=1, plot_label = F, plot_chull=TRUE,plot_geom_path=FALSE,plot_title=""){
   
   if(!is.factor(groups)){
