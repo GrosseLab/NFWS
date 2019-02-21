@@ -1,0 +1,22 @@
+rule tximport_genes:
+	input:
+		salmon_files = expand("results/de/salmon{{parameterSet}}/{{ref}}/{{kind}}/{sample}/quant.sf", sample = config["samples"].keys()),
+		tx2gene = lambda wildcards: config["ref_dir"] + config["references"][wildcards.ref]["genome_annotation"] + ".tx2gene.tsv"
+	output:
+		counts = "results/de/salmon{parameterSet}/{ref}/{kind}/counts.genes.tsv",
+		length = "results/de/salmon{parameterSet}/{ref}/{kind}/length.genes.tsv"
+	conda:
+		"../../envs/tximport.yaml"
+	script:
+		"tximport_genes.R"
+
+rule tximport_transcripts:
+	input:
+		salmon_files = expand("results/de/salmon{{parameterSet}}/{{ref}}/{{kind}}/{sample}/quant.sf", sample = config["samples"].keys())
+	output:
+		counts = "results/de/salmon{parameterSet}/{ref}/{kind}/counts.tsv",
+		length = "results/de/salmon{parameterSet}/{ref}/{kind}/length.tsv"
+	conda:
+		"../../envs/tximport.yaml"
+	script:
+		"tximport_transcripts.R"

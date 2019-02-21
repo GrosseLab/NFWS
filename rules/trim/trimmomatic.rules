@@ -1,0 +1,41 @@
+ruleorder:  trimmomatic_pe_adapter_trimming > trimmomatic_se_adapter_trimming
+ruleorder:  trimmomatic_pe_quality_trimming > trimmomatic_se_quality_trimming
+
+rule trimmomatic_pe_adapter_trimming:
+	input:
+		fastqs = expand("data/reads/raw/{{pre}}{read}{{suf}}.fastq.gz", read=["R1", "R2"]),
+		adapters = config["adapter_sequences"]
+	output:
+		expand("data/reads/adapter_trimmed/{{pre}}{read}{{suf,.*}}.fastq.gz", read=["R1", "R2"]),
+		expand("data/reads/adapter_trimmed/{{pre}}{read}{{suf,.*}}_unpaired.fastq.gz", read=["R1", "R2"])
+	conda:
+		"../../envs/trimmomatic.yaml"
+	threads: 3
+	shell: "trimmomatic PE -threads {threads} -phred33 {input.fastqs} {output[0]} {output[2]} {output[1]} {output[3]} ILLUMINACLIP:{input.adapters}:2:30:5"
+
+rule trimmomatic_se_adapter_trimming:
+	input:
+		fastq = "data/reads/raw/{unit}.fastq.gz",
+		adapters = config["adapter_sequences"]
+	output: "data/reads/adapter_trimmed/{unit}.fastq.gz",
+	conda:
+		"../../envs/trimmomatic.yaml"
+	shell: "trimmomatic SE -phred33 {input.fastq} {output} ILLUMINACLIP:{input.adapters}:2:30:5"
+
+rule trimmomatic_pe_quality_trimming:
+	input: expand("data/reads/adapter_trimmed/{{pre}}{read}{{suf}}.fastq.gz", read=["R1", "R2"])
+	output:
+		expand("data/reads/quality_trimmed/{{pre}}{read}{{suf,.*}}.fastq.gz", read=["R1", "R2"]),
+		expand("data/reads/quality_trimmed/{{pre}}{read}{{suf,.*}}_unpaired.fastq.gz", read=["R1", "R2"])
+	conda:
+		"../../envs/trimmomatic.yaml"
+	threads: 3
+	shell: "trimmomatic PE -threads {threads} -phred33 {input} {output[0]} {output[2]} {output[1]} {output[3]} LEADING:5 TRAILING:5 SLIDINGWINDOW:4:15 MINLEN:36"
+
+rule trimmomatic_se_quality_trimming:
+	input: "data/reads/adapter_trimmed/{unit}.fastq.gz"
+	output: "data/reads/quality_trimmed/{unit}.fastq.gz",
+	conda:
+		"../../envs/trimmomatic.yaml"
+	shell: "trimmomatic SE -phred33 {input} {output} LEADING:5 TRAILING:5 SLIDINGWINDOW:4:15 MINLEN:36"
+

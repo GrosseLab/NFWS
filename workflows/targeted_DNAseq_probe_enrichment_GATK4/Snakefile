@@ -1,0 +1,36 @@
+# Snakefile for probe enriched targeted DNAseq, e.g. Illumina Trusight Cancer
+
+configfile: "config.json"
+include: config["path_rules"] + "/general/functions.rules"
+include: config["path_rules"] + "/general/samtools.rules"
+include: config["path_rules"] + "/references/human.rules"
+include: config["path_rules"] + "/references/illumina.rules"
+include: config["path_rules"] + "/trim/trimmomatic.rules"
+include: config["path_rules"] + "/mapping/bwa_mem_pe.rules"
+include: config["path_rules"] + "/mapping/picard.rules"
+include: config["path_rules"] + "/coverage/bed_coverage.rules"
+include: config["path_rules"] + "/coverage/plots.rules"
+include: config["path_rules"] + "/coverage/CNV.rules"
+include: config["path_rules"] + "/variant/gatk4.rules"
+include: config["path_rules"] + "/qa/fastqc.rules"
+include: config["path_rules"] + "/de/feature_count.rules"
+
+rule all:
+	input:
+		"plots/coverage/bwa--hg38/hg38/adapter_trimmed/BRCA1-ENST00000357654.pdf"
+		,"plots/CNV/bwa--hg38/hg38/adapter_trimmed/BRCA1-ENST00000357654.pdf"
+		,"plots/cum_coverage_goi/bwa--hg38/hg38/adapter_trimmed/cumulative_coverage_of_genes_of_interest.pdf"
+		,expand("results/CNV/bwa--hg38/hg38/adapter_trimmed/{patient}_CNV.txt", patient = config["samples"].keys() )
+		,expand("results/coverage/bwa--hg38/hg38/adapter_trimmed/{patient}_20_20.lower100", patient = config["samples"].keys() )
+		,expand("results/coverage/bwa--hg38/hg38/adapter_trimmed/{patient}_20_20.lower60", patient = config["samples"].keys() )
+		,expand("results/coverage/bwa--hg38/hg38/adapter_trimmed/{patient}_20_20.lower30", patient = config["samples"].keys() )
+		,expand("results/coverage/bwa--hg38/hg38/adapter_trimmed/{patient}_20_20.lower10", patient = config["samples"].keys() )
+		,expand("results/qa/fastqc/quality_trimmed/{unit}_fastqc.html", unit = [w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])] )
+		,expand("results/variants/gatk4--hg38/hg38/quality_trimmed/{patient}.vcf", patient = config["samples"].keys() )
+		,"results/variants/gatk4--hg38/hg38/quality_trimmed/all.vcf"
+
+onsuccess:
+	shell('mail -s "Job Finished: ' + config["run"] + '" ' + config["notification_email"] + ' < {log}')
+
+onerror:
+	shell('mail -s "Job Error: ' + config["run"] + '" ' + config["notification_email"] + ' < {log}')

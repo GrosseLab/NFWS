@@ -1,0 +1,40 @@
+def annotation_to_ref(annotation, file):
+	for ref in config["references"].keys():
+		if config["references"][ref]["genome_annotation"] == annotation:
+			return(config["references"][ref][file])
+	return("")
+
+rule genes_gffutils_create_db_gtf:
+	input: "{path}.gtf"
+	output: "{path}.db"
+	conda:
+		"../../envs/gffutils.yaml"
+	script:
+		"scripts/genes_gffutils_create_db_gtf.py"
+
+rule genes_gffutils_create_db_gff3:
+	input: "{path}.gff3"
+	output: "{path}.db"
+	conda:
+		"../../envs/gffutils.yaml"
+	script:
+		"scripts/genes_gffutils_create_db_gff3.py"
+
+rule extract_transcriptome_seq:
+	input:
+		genome = lambda wildcards: config["ref_dir"] + annotation_to_ref(wildcards.annotation, "genome"),
+		annotation_db = lambda wildcards: config["ref_dir"] + re.sub('\.(gff3|gtf|bed)$', '.db', wildcards.annotation)
+	output: config["ref_dir"] + "{annotation}.{feature}.fa"
+	conda:
+		"../../envs/gffutils.yaml"
+	script:
+		"scripts/extract_transcriptome_seq.py"
+
+rule extract_transcript_to_gene_map:
+	input:
+		annotation_db = lambda wildcards: config["ref_dir"] + re.sub('\.(gff3|gtf|bed)$', '.db', annotation_to_ref(wildcards.annotation, "genome_annotation"))
+	output: config["ref_dir"] + "{annotation}.tx2gene.tsv"
+	conda:
+		"../../envs/gffutils.yaml"
+	script:
+		"scripts/extract_transcript_to_gene_map.py"

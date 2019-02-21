@@ -3,15 +3,16 @@ from snakemake.utils import R
 rule table_CNV_analysis:
 	"""Output regions ouside confidence to suggest CNV in tables"""
 	input:
-		expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
+		expand("results/coverage/{{mapper}}{{parameterSet}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
 	output:
-		expand("results/CNV/{{mapper}}/{{ref}}/{{kind}}/{sample}_CNV.txt", sample = config["samples"].keys() )
+		expand("results/CNV/{{mapper}}{{parameterSet}}/{{ref}}/{{kind}}/{sample}_CNV.txt", sample = config["samples"].keys() )
 	threads: 48
 	run:
 		files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
 		mapper = wildcards.mapper,
 		ref = wildcards.ref,
 		kind = wildcards.kind,
+		parameterSet = wildcards.parameterSet,
 		# platform = config["platform"],
 		# manifest = config["manifest"],
 		left = "20",
@@ -33,6 +34,9 @@ rule table_CNV_analysis:
 
 			dt <- do.call('rbind', coverages)
 			rm(coverages)
+
+			# no Y-Chromosome since it messes up the analysis
+			dt<-dt[Chromosome != "chrY" & Chromosome != "chrX",]
 
 			dt[,Feature := sub("-.*", "", dt[,FeatureRegionName])]
 

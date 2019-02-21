@@ -4,14 +4,15 @@ ruleorder: plot_hist > plot_regions
 
 rule plot_regions:
     """Produces coverage plots for each gene in the manifest file."""
-    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
-    output: "plots/coverage/{mapper}/{ref}/{kind}/{anyregion}.pdf"
+    input: expand("results/coverage/{{mapper}}{{parameterSet}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
+    output: "plots/coverage/{mapper}{parameterSet}/{ref}/{kind}/{anyregion}.pdf"
     threads: 48
     run: 
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
       mapper = wildcards.mapper,
       ref = wildcards.ref,
       kind = wildcards.kind,
+      parameterSet = wildcards.parameterSet,
       # platform = config["platform"],
       # manifest = config["manifest"],
       left = "20",
@@ -39,7 +40,9 @@ rule plot_regions:
       split_table <- split(dt, dt[,Feature])
       rm(dt)
 
-      split_table <- mclapply(split_table, function(f_table){{
+      cat("multithreaded updates")
+
+      split_table <- lapply(split_table, function(f_table){{
         f_table[,RegionName := sub(".*?-", "", f_table[,FeatureRegionName])]
         f_table[,Region := as.numeric(sub("-.*", "", f_table[,RegionName]))]
         f_table[,Name := sub(".*-", "", f_table[,FeatureRegionName])]
@@ -47,13 +50,16 @@ rule plot_regions:
 
         f_table[,Position := f_table[,Position - {left}]]
         f_table[,LocationText := paste0(f_table[,Chromosome], ":", format(f_table[,Start] + {left} - 1, big.mark = ".", decimal.mark=","), "-", format(f_table[,End] - {right}, big.mark = ".", decimal.mark=","))]
-        f_table[,Exon := "Exon"]
-        f_table[,Abschnitt := "Abschnitt"]
+        # f_table[,Exon := "Exon"]
+        # f_table[,Abschnitt := "Abschnitt"]
+        f_table[,Label := paste0("Exon ", Region, " (", LocationText, "), Abschnitt ", PlotRegion)]
         setkey(f_table, Region, Position, Sample)
         return(f_table)
-      }}, mc.cores = {threads})
+      }})#, mc.cores = {threads})
 
-      mclapply(split_table, function(f_table){{
+      cat("starting plotting")
+
+      lapply(split_table, function(f_table){{
 
         f <- f_table[1,Feature]
 
@@ -80,33 +86,33 @@ rule plot_regions:
               # p <- p + geom_vline( aes( xintercept = End - Start - {left} - {right} + 0.5 ), colour="grey", linetype = "longdash" )
               # p <- p + geom_vline( aes( xintercept = End - Start - 20 - 20 + 0.5 ), colour="grey", linetype = "longdash" )
 
-              p <- p + facet_wrap( ~ Exon + Region + LocationText + Abschnitt + PlotRegion, scales = 'free_x', ncol=1 )
+              p <- p + facet_wrap( ~ Label, scales = 'free_x', ncol=1 )
               
               p <- p + labs(title = paste0('Abdeckung von ', f, '(', features[1,Name], ') in {ref}, Lauf: {run}'), x='Position in Exon' )
               p <- p + theme(plot.title = element_text(size = rel(0.8)))
               return(p)
         }})
 
-        dir.create('plots/coverage/{mapper}/{ref}/{kind}', recursive=T)
-        pdf(paste0('plots/coverage/{mapper}/{ref}/{kind}/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
+        pdf(paste0('plots/coverage/{mapper}{parameterSet}/{ref}/{kind}/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
           lapply(plots, print)
           lapply(plots, function(p){{
             print(p + scale_y_log10(limits = c(1, 20000), breaks = 10^(1:4))
           )}}) 
         dev.off()
-      return(NULL)}}, mc.cores = {threads})
+      return(NULL)}})#, mc.cores = {threads})
       """)
 
 rule plot_CNV_analysis:
   """Shows normalized relative coverages to suggest CNV"""
-  input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
-  output: "plots/CNV/{mapper}/{ref}/{kind}/{anyregion}.pdf"
+  input: expand("results/coverage/{{mapper}}{{parameterSet}}/{{ref}}/{{kind}}/{sample}_20_20.cov", sample = config["samples"].keys() )
+  output: "plots/CNV/{mapper}{parameterSet}/{ref}/{kind}/{anyregion}.pdf"
   threads: 48
   run:
     files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
     mapper = wildcards.mapper,
     ref = wildcards.ref,
     kind = wildcards.kind,
+    parameterSet = wildcards.parameterSet,
     # platform = config["platform"],
     # manifest = config["manifest"],
     left = "20",
@@ -128,6 +134,10 @@ rule plot_CNV_analysis:
 
       dt <- do.call('rbind', coverages)
       rm(coverages)
+
+      cat("remove chrY")
+
+      dt <- dt[Chromosome != "chrY",]
 
       dt[,Feature := sub("-.*", "", dt[,FeatureRegionName])]
 
@@ -162,7 +172,9 @@ rule plot_CNV_analysis:
       split_table <- split(dt, dt[,Feature])
       rm(dt)
 
-      split_table <- mclapply(split_table, function(f_table){{
+      cat("multithreaded adjustments")
+
+      split_table <- lapply(split_table, function(f_table){{
         f_table[,RegionName := sub(".*?-", "", f_table[,FeatureRegionName])]
         f_table[,Region := as.numeric(sub("-.*", "", f_table[,RegionName]))]
         f_table[,Name := sub(".*-", "", f_table[,FeatureRegionName])]
@@ -170,13 +182,16 @@ rule plot_CNV_analysis:
 
         f_table[,Position := f_table[,Position - {left}]]
         f_table[,LocationText := paste0(f_table[,Chromosome], ":", format(f_table[,Start] + {left} - 1, big.mark = ".", decimal.mark=","), "-", format(f_table[,End] - {right}, big.mark = ".", decimal.mark=","))]
-        f_table[,Exon := "Exon"]
-        f_table[,Abschnitt := "Abschnitt"]
+        # f_table[,Exon := "Exon"]
+        # f_table[,Abschnitt := "Abschnitt"]
+        f_table[,Label := paste0("Exon ", Region, " (", LocationText, "), Abschnitt ", PlotRegion)]
         setkey(f_table, Region, Position, Sample)
         return(f_table)
-      }}, mc.cores = {threads})
+      }})#, mc.cores = {threads})
 
-      mclapply(split_table, function(f_table){{
+      cat("multithreaded plotting")
+
+      lapply(split_table, function(f_table){{
         f <- f_table[1,Feature]
 
         cat(paste("Plotting", f_table[,Name][1], f))
@@ -204,25 +219,23 @@ rule plot_CNV_analysis:
               # p <- p + geom_vline( xintercept = 0.5, colour="grey", linetype = "longdash" )
               # p <- p + geom_vline( aes( xintercept = End - Start - 20 - 20 + 0.5 ), colour="grey", linetype = "longdash" )
 
-              p <- p + facet_wrap( ~ Exon + Region + LocationText + Abschnitt + PlotRegion, scales = 'free_x', ncol=1 )
+              p <- p + facet_wrap( ~ Label, scales = 'free_x', ncol=1 )
               
               p <- p + labs(title = paste0('CNV-Analyse von ', f, '(', currfeature[1,Name], ') in {ref}, Lauf: {run}'), x='Position in Exon', y='relative normalisierte Coverage [erwartete Kopienanzahl]')
               p <- p + theme(plot.title = element_text(size = rel(0.8)))
               return(p)
         }})
 
-        dir.create('plots/CNV/{mapper}/{ref}/{kind}', recursive=T)
-        pdf(paste0('plots/CNV/{mapper}/{ref}/{kind}/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
+        pdf(paste0('plots/CNV/{mapper}{parameterSet}/{ref}/{kind}/', f_table[,Name][1], '-', f, '.pdf'), paper="a4", height=11.692, width=8.267)
           lapply(plots, print)
         dev.off()
-      return(NULL)}}, mc.cores = {threads})
+      return(NULL)}})#, mc.cores = {threads})
     """)
-
 
 rule plot_hist:
     """Produces a summary plot of target coverage."""
-    input: expand("results/coverage/{{mapper}}/{{ref}}/{{kind}}/{sample}_diagnostics_20_20.hist", sample = config["samples"].keys() )
-    output: "plots/coverage/{mapper}/{ref}/{kind}/Total.pdf"
+    input: expand("results/coverage/{{mapper}}{{parameterSet}}/{{ref}}/{{kind}}/{sample}_diagnostics_20_20.hist", sample = config["samples"].keys() )
+    output: "plots/cum_coverage_goi/{mapper}{parameterSet}/{ref}/{kind}/cumulative_coverage_of_genes_of_interest.pdf"
     run:
       files = "c({})".format(",".join(map( lambda str: '"' + str + '"', input))),
       mapper = wildcards.mapper,
@@ -250,7 +263,7 @@ rule plot_hist:
       df <- do.call('rbind', cov)
       colnames(df) <- c('Sample', 'Depth', 'Count', 'Frequency', 'CumFrequency')
 
-      setwd('plots/coverage/{mapper}/{ref}/{kind}/')
+      # setwd('plots/coverage/{mapper}/{ref}/{kind}/')
 
       p <- ggplot( data = df, aes( x = Depth, y = CumFrequency, colour = Sample ) )
       p <- p + scale_x_continuous(breaks = c(0, 30, 50, 70, 100), minor_breaks = c(150, 200), limits = c(0, 200))
@@ -259,5 +272,5 @@ rule plot_hist:
       # p <- p + geom_vline( xintercept = seq(30,100,10), linetype = "longdash" )
       p <- p + ggtitle("Coverage distribution in run {run} using {ref}") + xlab("Depth of coverage") 
       p <- p + ylab( sprintf("Fraction of target bases with a coverage >= depth" ) )
-      ggsave( file = "Total.pdf", plot = p, width = 8.267, height = 11.692, title = "Coverage distribution of target regions" )
+      ggsave( file = "{output}", plot = p, width = 8.267, height = 11.692, title = "Coverage distribution of target regions" )
       """)

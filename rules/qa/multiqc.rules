@@ -1,0 +1,22 @@
+rule multiqc_fastqc:
+	input:
+		expand("results/qa/fastqc{{parameterSet}}/{{kind}}/{file}_fastqc.html", file=[w.replace('.fastq.gz', '') for w in sum(config["units"].values(), [])])
+	output:
+		report("results/qa/multiqc/fastqc{parameterSet,.*}_{kind}.html", caption="../../reports/fastqc.rst")
+	wildcard_constraints:
+		kind="(raw|adapter_trimmed|quality_trimmed)"
+	conda:
+		"../../envs/multiqc.yaml"
+	shell: "multiqc -f results/qa/fastqc{wildcards.parameterSet}/{wildcards.kind}/ --filename {output}"
+
+rule multiqc_star:
+	input:
+		expand("results/mapping/star{{parameterSet}}/{{ref}}/{{kind}}/{unit}/Log.final.out", unit = config['units'].keys())
+	output:
+		report("results/qa/multiqc/star{parameterSet,.*}_{ref}_{kind}.html", caption="../../reports/star.rst")
+	wildcard_constraints:
+		kind="(raw|adapter_trimmed|quality_trimmed)",
+		ref="(" + "|".join(config["references"].keys()) + ")"
+	conda:
+		"../../envs/multiqc.yaml"
+	shell: "multiqc -f results/mapping/star{wildcards.parameterSet}/{wildcards.ref}/{wildcards.kind}/ --filename {output}"
