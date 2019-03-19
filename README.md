@@ -14,38 +14,26 @@ sophisticated approach. Thats why we are porting all our workflows to
 *Note: Every workflow is a work-in-progress an should be handeld as such. This repository does not make using command-line programs easier. You need to understand how the command-line programs and snakemake work.*
 
 ## Installation
-### Docker image
-The easiest way is to use our [Docker image](https://hub.docker.com/r/kubiac/grosse-ngs-suite/). It comes with all software preinstalled and configured. (currently only develop branch has working Dockerfile, will be updated in next release)
+In an earlier version we used Docker to ensure the consistency between pipeline installtions. Today we decided to use the conda package manager along the bioconda and conda-forge channels.
 
-    docker pull kubiac/grosse-ngs-suite:develop
-
-Then you create a directory, a Snakefile, and a config.json in the described structure (c.f. How it should be used) and start it with
-
-    docker run -v /path/to/dir:/data/in kubiac/grosse-ngs-suite:develop
-
-### Manual
-
-For manual installation please install this software in a current version and make it available via the PATH-variable. Scripts for installation that we use ourselfs are [available here](https://github.com/GrosseLab/InstallProcedures).
-* python 3
-* [snakemake](https://bitbucket.org/johanneskoester/snakemake/wiki/Documentation#markdown-header-installation)
-* bwa
-* segemehl
-* bedtools (current and version 2.22.1 - for reasons)
-* samtools
-* GATK
-* picard
-* R (with [rpy2](https://pypi.python.org/pypi/rpy2) support)
-* featureCounts
-* FastQC
-* trimmomatic
-
-Then clone this repository somewhere and point in your Snakefiles (examples in Workflows) to the rules that you want to use.
+1. Please first install miniconda on your machine using these resources: https://conda.io/en/latest/miniconda.html.
+2. Afterwards, please setup the bioconda and conda-forge channels as described here:https://bioconda.github.io/#set-up-channels.
+3. Next, you should install snakemake and some useful helper tools in a new environment
+```
+conda create -n NFWS snakemake git pigz samtools
+conda activate snakemake
+```
+4. You can now execute the NFWS snakemake pipeline with conda
+```
+snakemake --use-conda
+```
 
 ## List of analyses
 
-* GATK SNP-Calling
+* GATK4 SNP-Calling
 * CNV analysis
 * coverage analysis
+* Star-salmon-tximport-edgeR RNA-Seq analysis
 * ... other things that you can do by combining all the rules available
 
 ## How it should be used
@@ -57,7 +45,7 @@ Every set of snakemake rules works only with a fixed naming schema and config-fi
 Our naming schema uses directories quite heavily to separate different parameters/programs/approaches. This is a subset of the complete naming schema/directory structure, which should suffice to get the gist:
 
     my_project
-    ├── config.json
+    ├── config.yaml
     ├── Snakefile
     ├── data
     │   └── reads
@@ -100,20 +88,37 @@ Our naming schema uses directories quite heavily to separate different parameter
                         
 ### Snakefile and config file
 
-The most important part of the config is the definition of the reads-samples-patient relationship. This is done via 2 hashes:
+The most important part of the config is the definition of the reads-samples-patient relationship. This is done via 3 hashes for condition, biological replicates, and technical replicates respectively:
 
-    "samples": {
-        "patient1": [ "sample1", "sample2" ],
-        "patient2": [ "sampleA", "sampleB" ]
+    replicates:
+      treatment: [patient1, patient2]
+      control: [patient3, patient4]
+    samples:
+      patient1: [ sample1A, sample1B ]
+      patient2: [ sample2A, sample2B ]
+      patient3: [ sample3A, sample3B ]
+      patient4: [ sample4A, sample4B ]
     },
-    "units": {
-        "sample1": ["reads_R1.fastq.gz", "reads_R2.fastq.gz" ],
-        "sample2": ["more_reads_R1.fastq.gz", "more_reads_R2.fastq.gz" ],
-        "sampleA": ["S3_R1.fastq.gz", "S3_R2.fastq.gz" ],
-        "sampleB": ["S4_R1.fastq.gz", "S4_R2.fastq.gz" ]
+    units:
+      sample1A: [reads_R1.fastq.gz, reads_R2.fastq.gz ]
+      sample1B: [more_reads_R1.fastq.gz, more_reads_R2.fastq.gz ]
+      sample2A: [S3_R1.fastq.gz, S3_R2.fastq.gz ]
+      sample2B: [S4_R1.fastq.gz, S4_R2.fastq.gz ]
+      sample2A: [S5_R1.fastq.gz, S5_R2.fastq.gz ]
+      sample2B: [S6_R1.fastq.gz, S6_R2.fastq.gz ]
+      sample2A: [S7_R1.fastq.gz, S7_R2.fastq.gz ]
+      sample2B: [S8_R1.fastq.gz, S8_R2.fastq.gz ] 
     }
     
-Sample config and Snakefile s are available in the repository as workflows.
+Sample config and Snakefiles are available in the repository as workflows. Some may still contain json instead of yaml config files.
+
+### Parameter configuration
+Parameters for programs can be specified in the config file. They are organized by parameter sets (i.e. code names for a set of parameters for several programs) and program names:
+
+    parameters:
+      gtf_adj:
+        star: ["--sjdbGTFfeatureExon", "exon", "--sjdbGTFtagExonParentTranscript", "Parent"]
+        salmon: ["--fldMean",  "190"]
 
 ## Release-Numbering conventions
 
